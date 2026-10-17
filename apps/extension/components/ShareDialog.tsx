@@ -287,7 +287,7 @@ export function ShareDialog() {
             rel="noopener"
             class="text-meta text-(--ds-gray-900) hover:text-(--ds-gray-1000) no-underline hover:underline transition-colors"
           >
-            How MarkLayer works
+            How Redline works
           </a>
         </Dialog.Popup>
       </Dialog.Portal>

@@ -74,7 +74,7 @@ const hooks = { canEditFromRoom, isReadonly: computed(() => canEditFromRoom.valu
 
 let teardown: (() => void) | null = null;
 const connect = () => {
-  teardown = connectRoom({ roomId: 'room-1', origin: 'https://marklayer.app', hooks });
+  teardown = connectRoom({ roomId: 'room-1', origin: 'https://feedback.simplelocalweb.com', hooks });
   const socket = FakeSocket.instances.at(-1);
   if (!socket) throw new Error('connectRoom opened no socket');
   return socket;

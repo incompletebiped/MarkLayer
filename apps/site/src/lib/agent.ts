@@ -14,10 +14,10 @@ import { ORIGIN } from './site';
 /** Read from apps/mcp/package.json at build time so a release can't leave the server card advertising a stale version. */
 export const MCP_VERSION: string = mcpPkg.version;
 
-export const SKILL_PATH = '/.well-known/agent-skills/marklayer-annotations/SKILL.md';
+export const SKILL_PATH = '/.well-known/agent-skills/redline-annotations/SKILL.md';
 
 const SKILL_DESCRIPTION =
-  'Create MarkLayer annotation share links over a no-auth HTTP API, and process a human’s webpage annotations as a work queue over MCP, at the share link’s own /mcp address or via the marklayer-mcp package.';
+  'Create Redline review links over a no-auth HTTP API, and work through the marks a person left on a webpage as a queue over MCP, at the link’s own /mcp address or via the marklayer-mcp package.';
 
 /** RFC 9727 API catalog: points agents at the share API's spec, docs and health check. */
 export const API_CATALOG = {
@@ -31,8 +31,11 @@ export const API_CATALOG = {
   ],
 };
 
-/** The stdio install, roomless: the agent is handed a room later by link. The landing shows it too. */
-export const MCP_INSTALL = 'claude mcp add marklayer -- npx -y marklayer-mcp';
+/**
+ * The stdio install, roomless: the agent is handed a room later by link. The
+ * package is upstream's and defaults to marklayer.app, so the env var points it here.
+ */
+export const MCP_INSTALL = `claude mcp add redline -e MARKLAYER_API_BASE=${ORIGIN} -- npx -y marklayer-mcp`;
 
 /**
  * MCP Server Card (SEP-1649). The stdio package is the one fixed address; the
@@ -45,6 +48,7 @@ export const MCP_SERVER_CARD = {
     type: 'stdio',
     command: 'npx',
     args: ['-y', 'marklayer-mcp'],
+    env: { MARKLAYER_API_BASE: ORIGIN },
     install: MCP_INSTALL,
     package: 'https://www.npmjs.com/package/marklayer-mcp',
   },
@@ -52,10 +56,10 @@ export const MCP_SERVER_CARD = {
     {
       type: 'streamable-http',
       url: `${ORIGIN}/s/{room}/mcp`,
-      install: `claude mcp add --transport http marklayer ${ORIGIN}/s/{room}/mcp`,
+      install: `claude mcp add --transport http redline ${ORIGIN}/s/{room}/mcp`,
       variables: {
         room: {
-          description: `The id in a share link (${ORIGIN}/s/{room}). The endpoint serves that one room, so it has every tool but marklayer_connect_room.`,
+          description: `The id in a Redline link (${ORIGIN}/s/{room}). The endpoint serves that one room, so it has every tool but marklayer_connect_room.`,
           isRequired: true,
         },
       },
@@ -94,7 +98,7 @@ export function skillIndex(digest: string) {
     $schema: 'https://schemas.agentskills.io/discovery/0.2.0/schema.json',
     skills: [
       {
-        name: 'marklayer-annotations',
+        name: 'redline-annotations',
         type: 'skill-md',
         description: SKILL_DESCRIPTION,
         url: `${ORIGIN}${SKILL_PATH}`,

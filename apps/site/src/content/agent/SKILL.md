@@ -1,21 +1,21 @@
 ---
-name: marklayer-annotations
-description: Create MarkLayer annotation share links over a no-auth HTTP API, and process a human's webpage annotations (comments, selections, areas, inspected elements) as a work queue over MCP (at the share link's own /mcp address, or via the marklayer-mcp package), which can read the page, watch for new work, acknowledge, resolve, dismiss, reply, leave its own comments, and propose exact text edits as diffs, all with live status.
-license: MIT
+name: redline-annotations
+description: Create Redline review links over a no-auth HTTP API, and process a human's webpage annotations (comments, selections, areas, inspected elements) as a work queue over MCP (at the share link's own /mcp address, or via the marklayer-mcp package), which can read the page, watch for new work, acknowledge, resolve, dismiss, reply, leave its own comments, and propose exact text edits as diffs, all with live status.
+license: Apache-2.0
 ---
 
-# Working with MarkLayer annotations
+# Working with Redline annotations
 
-MarkLayer (https://marklayer.app) is a free, anonymous webpage annotation tool.
-Humans draw, comment, and mark up any URL; each session is a "room" addressed by
-an unguessable id. There are two ways an agent works with it.
+Redline (https://feedback.simplelocalweb.com) is Simple Local Web's website
+feedback tool, built on the open-source MarkLayer project. People draw, comment
+and mark up a page; each page is a "room" addressed by an unguessable id. There are two ways an agent works with it.
 
 ## 1. Mint a share link (HTTP, no auth)
 
 The id you POST to **is** the access token, so pick any unguessable string
 (nanoid/uuid). No account, key, or SDK required.
 
-    POST https://marklayer.app/api/{id}
+    POST https://feedback.simplelocalweb.com/api/{id}
     Content-Type: application/json
     { "ops": [], "url": "https://example.com/page", "width": 1440, "expires_in": 2592000 }
 
@@ -25,24 +25,24 @@ The id you POST to **is** the access token, so pick any unguessable string
 - `expires_in`: seconds until cleanup (max 2592000 = 30 days). Omit for no fixed expiry — the link
   is deleted 90 days after its last access, and any view or comment resets that clock.
 
-The share link is then `https://marklayer.app/s/{id}`. To mint many at once,
+The share link is then `https://feedback.simplelocalweb.com/s/{id}`. To mint many at once,
 loop the POST with a fresh id per URL. Full machine-readable spec:
-https://marklayer.app/api/openapi.json (also listed in
-https://marklayer.app/.well-known/api-catalog).
+https://feedback.simplelocalweb.com/api/openapi.json (also listed in
+https://feedback.simplelocalweb.com/.well-known/api-catalog).
 
 ## 2. Process annotations as a work queue (MCP)
 
 Every share link is also a remote MCP server at the same address plus `/mcp`,
 so you can connect with nothing installed:
 
-    claude mcp add --transport http marklayer https://marklayer.app/s/{id}/mcp
+    claude mcp add --transport http redline https://feedback.simplelocalweb.com/s/{id}/mcp
 
 Append `?agent=<your-name>` so the humans see who is working. That endpoint is
 bound to its room: skip step 1 below, because `marklayer_connect_room` is the one
 tool it does not have. If your client only runs local servers, install the stdio
 package instead:
 
-    claude mcp add marklayer -- npx -y marklayer-mcp
+    claude mcp add redline -e MARKLAYER_API_BASE=https://feedback.simplelocalweb.com -- npx -y marklayer-mcp
 
 A room's `url` is not always a webpage. It can be a PDF or an image, either a
 link to one or a file someone uploaded, served from `/f/{id}`. Annotations on
@@ -85,7 +85,7 @@ A comment carries fields worth reading before you act: `status`, `priority`
 you), `mentions`, and the browser, OS and viewport it was written on. A report
 that only reproduces at one width usually says so there.
 
-Source: https://github.com/thevrus/MarkLayer/tree/main/apps/mcp
+Source (upstream MarkLayer): https://github.com/thevrus/MarkLayer/tree/main/apps/mcp
 
 ## In-browser (WebMCP)
 

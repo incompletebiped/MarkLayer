@@ -95,39 +95,13 @@ if (shellHtml === null) {
   }
 }
 
-// 7. The prerendered homepage must carry the same headline as the live one.
-//
-//    main.tsx clears #app on boot, so nobody with JS ever sees this markup and
-//    drift goes unnoticed — it previously ran months out of date, serving
-//    crawlers a headline the live page had stopped using. Both renderers now
-//    read src/data/home-copy.json, so this only has to confirm the prerendered
-//    markup really emitted it.
-const copy = JSON.parse(await readFile(resolve(DIST, '../src/data/home-copy.json'), 'utf8'));
-const headline = `${copy.headlinePrefix} ${copy.headlineJoiner} ${copy.headlineChannel} ${copy.headlineSuffix}`;
-
-const shellH1 = shellHtml
-  ?.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1]
-  ?.replace(/<[^>]+>/g, ' ')
-  .replace(/\s+/g, ' ')
-  .trim();
-
-// Skip when the shell is already missing — check 6 has reported the real problem.
-if (shellHtml !== null && shellH1 !== headline) {
-  errors.push(
-    `homepage headline drift:\n      prerendered: ${JSON.stringify(shellH1)}\n      home-copy.json: ${JSON.stringify(headline)}`,
-  );
-}
-
-// 8. Load-bearing claims must appear in the PRERENDERED markup, not just in
-//    Landing.tsx. AI crawlers (GPTBot, PerplexityBot, ClaudeBot, CCBot) do not
-//    execute JavaScript, so anything that lives only in the SPA is invisible to
-//    exactly the engines these pages are written to be cited by. Checking the
-//    h1 alone let the two homepages diverge on every other claim.
+// 7. Load-bearing claims must appear in the PRERENDERED markup, not just in
+//    Landing.tsx: AI crawlers do not execute JavaScript, so SPA-only copy is
+//    invisible to them. The licence line is the Apache-2.0 attribution.
 const SHELL_CLAIMS = [
-  { label: 'retention window', re: /90 days after their last activity/ },
+  { label: 'product name', re: /Redline/ },
+  { label: 'upstream attribution', re: /MarkLayer/ },
   { label: 'licence', re: /Apache-2\.0/ },
-  { label: 'competitor pricing proof', re: /\$79\/month/ },
-  { label: 'free-tools audit link', re: /\/guides\/free-website-annotation-tools/ },
 ];
 
 if (shellHtml !== null) {
@@ -141,16 +115,21 @@ if (shellHtml !== null) {
   }
 }
 
-// 9. No unfilled `{{word}}` placeholder reaches an agent. The Worker inlines
+// 8. No unfilled `{{word}}` placeholder reaches an agent. The Worker inlines
 //    robots.txt and SKILL.md from source and llms*.txt from dist (apps/worker/src/index.ts),
 //    so a placeholder the site build fills only in dist must never be read from source.
 const SITE = resolve(DIST, '..');
+// The origin the agent text links to, read from the module that defines it.
+const ORIGIN = (await readFile(join(SITE, 'src/lib/site.ts'), 'utf8')).match(/export const ORIGIN = '([^']+)'/)?.[1];
+if (!ORIGIN) errors.push('src/lib/site.ts: could not read ORIGIN');
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+const originPattern = new RegExp(`${escapeRe(ORIGIN ?? '')}(/[^\\s)\\]>"'\`]*)?`, 'g');
 const AGENT_TEXT = [
   'src/content/agent/robots.txt',
   'src/content/agent/SKILL.md',
   'dist/llms.txt',
   'dist/llms-full.txt',
-  'dist/pricing.md',
+  'dist/mcp.md',
 ];
 const agentText = new Map(
   await Promise.all(AGENT_TEXT.map(async (rel) => [rel, await readFile(join(SITE, rel), 'utf8')])),
@@ -161,7 +140,7 @@ for (const [rel, text] of agentText) {
   }
 }
 
-// 10. The sitemap lists every indexable page exactly once, and nothing else.
+// 9. The sitemap lists every indexable page exactly once, and nothing else.
 const sitemap = distSet.has('sitemap.xml') ? await readFile(join(DIST, 'sitemap.xml'), 'utf8') : '';
 if (!sitemap) errors.push('dist/sitemap.xml is missing');
 const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, loc]) => new URL(loc).pathname);
@@ -177,7 +156,7 @@ for (const path of indexable) {
   if (!locSet.has(path)) errors.push(`sitemap.xml: indexable page ${path} is missing from the sitemap`);
 }
 
-// 11. Absolute links in the agent text resolve too. Agents follow these without
+// 10. Absolute links in the agent text resolve too. Agents follow these without
 //     ever seeing an <a href>, so check 1 never reaches them.
 //     The Worker serves the paths in wrangler.jsonc's `run_worker_first`, so those
 //     are skipped: `/x/*` entries are prefixes, the rest exact. Read by regex, not
@@ -192,10 +171,10 @@ const WORKER_PREFIXES = workerFirst.filter((e) => e.endsWith('/*')).map((e) => e
 // "/" is worker-first, so the bare origin is skipped; it resolves anyway.
 for (const [rel, text] of agentText) {
   if (!rel.startsWith('dist/')) continue;
-  for (const [, raw = ''] of text.matchAll(/https:\/\/marklayer\.app(\/[^\s)\]>"'`]*)?/g)) {
+  for (const [, raw = ''] of text.matchAll(originPattern)) {
     const path = raw.replace(/[?#].*$/, '').replace(/[.,:;]+$/, '') || '/';
     if (WORKER_EXACT.has(path) || WORKER_PREFIXES.some((p) => path.startsWith(p))) continue;
-    if (!resolves(path)) errors.push(`${rel}: broken absolute link -> https://marklayer.app${path}`);
+    if (!resolves(path)) errors.push(`${rel}: broken absolute link -> ${ORIGIN}${path}`);
   }
 }
 

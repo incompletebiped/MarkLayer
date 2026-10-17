@@ -192,7 +192,7 @@ app.get('/s/:id', async (c) => {
   const res = await c.env.ASSETS.fetch(new Request(new URL('/', reqUrl)));
   let html = await res.text();
   const ogImage = `${reqUrl.origin}/og/${annotationId}.png?domain=${encodeURIComponent(domain)}`;
-  const title = `MarkLayer \u00b7 Annotations on ${domain}`;
+  const title = `Redline \u00b7 Annotations on ${domain}`;
   const description = shareDescription({ domain, ops: ops ?? [] });
   html = html
     .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${reqUrl.href}">`)
@@ -241,7 +241,7 @@ app.get('/p/:id', async (c) => {
   let html = await res.text();
   const ogImage = `${reqUrl.origin}/og/${projectId}.png?domain=${encodeURIComponent(domain)}`;
   const pagesLabel = pageCount > 0 ? ` (${pageCount} pages)` : '';
-  const title = `MarkLayer · Annotations on ${domain}${pagesLabel}`;
+  const title = `Redline · Annotations on ${domain}${pagesLabel}`;
   const description = shareDescription({ domain, ops: firstPageOps ?? [] });
   html = html
     .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${reqUrl.href}">`)

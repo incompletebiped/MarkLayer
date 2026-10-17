@@ -64,9 +64,15 @@ export function cycleTheme() {
   lsSet('ml-theme', next);
 }
 
-export const PALETTE = ['#b462f5', '#3b82f6', '#06b6d4', '#22c55e', '#facc15', '#f97316', '#f43f5e'];
+// Redline's red first: it is the default mark, and the brand's one pop colour.
+export const PALETTE = ['#c8372d', '#0e3a75', '#3b82f6', '#06b6d4', '#22c55e', '#facc15', '#f97316'];
+
+/** A resolved pin turns brand navy whatever colour it was drawn in: open is red, done is navy. */
+export const RESOLVED_PIN_COLOR = '#0e3a75';
 
 const COLOR_NAMES: Record<string, string> = {
+  '#c8372d': 'Red',
+  '#0e3a75': 'Navy',
   '#b462f5': 'Purple',
   '#3b82f6': 'Blue',
   '#06b6d4': 'Cyan',
@@ -86,7 +92,7 @@ export function colorName(hex: string): string {
   return COLOR_NAMES[hex.toLowerCase()] ?? hex.toUpperCase();
 }
 
-export const color = signal(lsGet('ml-color') || '#f43f5e');
+export const color = signal(lsGet('ml-color') || '#c8372d');
 
 export function setColor(c: string) {
   color.value = c;

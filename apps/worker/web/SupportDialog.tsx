@@ -111,13 +111,13 @@ export function SupportDialog() {
                 tuned for the landing page's much larger steps, and wants pulling
                 in at this 24px headline. */}
             <Dialog.Title className="m-0 text-title font-semibold tracking-[-0.032em] leading-tight text-balance text-(--ds-gray-1000)">
-              Thanks for using MarkLayer
+              Thanks for using Redline
             </Dialog.Title>
             {/* Their own count is the plainest proof it worked for them. A floor:
                 notes from before this browser started counting are not in it. */}
             <Dialog.Description className="mt-2.5 mb-0 text-ui leading-normal text-(--ds-gray-900)">
               {notes > 0 && `You have made ${notes.toLocaleString()} notes so far. `}
-              It is free for everyone, and it will stay free. I pay for the servers myself.{cost} MarkLayer makes no
+              It is free for everyone, and it will stay free. I pay for the servers myself.{cost} Redline makes no
               money, on purpose:
             </Dialog.Description>
 
@@ -143,7 +143,7 @@ export function SupportDialog() {
                 // same focus ring, one place to change.
                 class={cn(submitBtn, 'mt-5 h-10 w-full rounded-lg text-ui-lg no-underline')}
               >
-                Support MarkLayer
+                Support Redline
               </a>
             ) : null}
 

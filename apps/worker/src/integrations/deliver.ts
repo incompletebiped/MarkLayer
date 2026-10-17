@@ -123,7 +123,7 @@ export function validateIntegration(integration: {
     rendered = provider.render({
       event: { type, items: [{ kind: 'Comment', author: 'test', text: 'test' }] },
       config,
-      roomUrl: 'https://marklayer.app/s/test',
+      roomUrl: 'https://feedback.simplelocalweb.com/s/test',
       pageUrl: null,
     });
     if (rendered) break;

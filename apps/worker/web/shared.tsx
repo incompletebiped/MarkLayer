@@ -4,8 +4,6 @@ import type { DeviceMode } from '@ext/lib/types';
 import { cn } from '@marklayer/types';
 import { Check, Copy, Loader2, Monitor, Smartphone, Tablet } from 'lucide-preact';
 import { useEffect, useRef } from 'preact/hooks';
-import { siGithub } from 'simple-icons';
-import { MARK_PATHS, MARK_TRANSFORM } from '../src/brand';
 
 /** Item of a panel's Base UI menu. */
 export const menuItem = cn(
@@ -84,54 +82,38 @@ export function CopyControl({
   );
 }
 
-let logoIdx = 0;
+/** Redline's mark: a navy rounded square with a white square-cap check. */
 export function Logo({ size = 24, class: className }: { size?: number; class?: string }) {
-  const id = `ml${++logoIdx}`;
   return (
-    <svg width={size} height={size} viewBox="0 0 512 512" fill="none" aria-hidden="true" class={className}>
-      <g transform={MARK_TRANSFORM} fill={`url(#${id})`}>
-        {MARK_PATHS.map((d) => (
-          <path key={d} d={d} />
-        ))}
-      </g>
-      <defs>
-        <linearGradient id={id} gradientTransform="rotate(45)" style={{ transformOrigin: 'center center' }}>
-          <stop stop-color="#A855F7" />
-          <stop offset="1" stop-color="#6D28D9" />
-        </linearGradient>
-      </defs>
+    <svg width={size} height={size} viewBox="0 0 52 52" aria-hidden="true" class={className}>
+      <rect width="52" height="52" rx="8" fill="#0e3a75" />
+      <path
+        d="M4 12.5l5 5L20 6"
+        transform="translate(11 11) scale(1.25)"
+        fill="none"
+        stroke="#fff"
+        stroke-width="3.2"
+        stroke-linecap="square"
+      />
     </svg>
   );
 }
 
-/* The box is the tap target, not a resting container: it carries no background
-   until hover, and it matches the sibling icon link in the landing nav so the
-   two read as one pair rather than two differently-sized glyphs. 44px under
-   `sm` clears the touch-target floor; the bare 18px anchor did not. */
-export const ICON_LINK_CLS =
-  'inline-flex items-center justify-center size-11 sm:size-9 rounded-lg transition-colors no-underline hover:bg-current/[0.04]';
+/** Mark plus the "REDLINE" wordmark, with the red rule under the name. */
+export function Wordmark({ size = 30, class: className }: { size?: number; class?: string }) {
+  return (
+    <span class={cn('inline-flex items-center gap-2.5', className)}>
+      <Logo size={size} />
+      <span class="border-b-[3px] border-ml-mark font-display text-wordmark font-extrabold uppercase text-ml-brand">
+        Redline
+      </span>
+    </span>
+  );
+}
 
 /* The landing page embeds a room in an iframe, so a bare `href="/"` loads the
    landing page inside its own screenshot. Every way out of the viewer spreads this. */
 export const HOME_LINK_PROPS = { href: '/', target: '_top' } as const;
-
-export function GithubLink({ dark }: { dark?: boolean }) {
-  return (
-    <a
-      href="https://github.com/thevrus/MarkLayer"
-      target="_blank"
-      rel="noopener"
-      class={`${ICON_LINK_CLS} ${
-        dark ? 'text-ml-fg/60 hover:text-ml-fg' : 'text-(--ds-gray-900) hover:text-(--ds-gray-900)'
-      }`}
-    >
-      <span class="sr-only">GitHub</span>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d={siGithub.path} />
-      </svg>
-    </a>
-  );
-}
 
 export function TextInputOverlay({
   x,

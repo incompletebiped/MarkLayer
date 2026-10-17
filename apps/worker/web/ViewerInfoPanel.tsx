@@ -12,6 +12,7 @@ import { isUploadPath } from './docSource';
 import { IntegrationsSection } from './IntegrationsSection';
 import { PresenceDot } from './shared';
 import { annotationId, infoPanelOpen, isReadonly, pageUrl, panelsDocked, showInfoPanel, timeAgo } from './signals';
+import { SUPPORT_ENABLED } from './support';
 import { openSupportCard } from './support-ui';
 import { connected, createdAt, expiresAt, isOwned } from './useRealtimeSync';
 
@@ -303,7 +304,7 @@ function InfoPanelBody() {
         )}
         <a href={HOW_IT_WORKS_URL} target="_blank" rel="noopener" class={panelLinkRow}>
           <BookOpen size={14} strokeWidth={1.5} class="shrink-0" aria-hidden="true" />
-          <span class="flex-1">How MarkLayer works</span>
+          <span class="flex-1">How Redline works</span>
           <ArrowUpRight size={14} strokeWidth={1.5} class="shrink-0" aria-hidden="true" />
         </a>
         {/* Authors only, because the card itself is: `SupportDialog` renders
@@ -311,10 +312,10 @@ function InfoPanelBody() {
             signal and watch nothing happen. No trailing glyph either — in this
             panel the chevron means "expands" and the arrow means "leaves", and
             this does neither. */}
-        {!readonly && (
+        {!readonly && SUPPORT_ENABLED && (
           <button type="button" onClick={() => openSupportCard('panel')} class={cn(panelLinkRow, 'w-full text-left')}>
             <Heart size={14} strokeWidth={1.5} class="shrink-0" aria-hidden="true" />
-            <span class="flex-1">Support MarkLayer</span>
+            <span class="flex-1">Support Redline</span>
           </button>
         )}
       </div>

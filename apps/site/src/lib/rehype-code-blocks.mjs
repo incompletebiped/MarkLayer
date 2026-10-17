@@ -1,16 +1,8 @@
 /**
- * Give every highlighted Markdown code block a bar: the language on the left, a
- * copy button on the right.
- *
- * The button ships `hidden` and the page script reveals it, so a reader with no
- * JavaScript never meets a control that does nothing. The bar itself is always
- * there, which is what keeps the reveal from shifting the block.
- *
- * Runs after Shiki, which has already replaced the bare `pre` and stamped it
- * with `data-language`.
+ * The bar over a code block (CodeBlock.astro): the language on the left, a copy
+ * button on the right. The button ships `hidden` and the page script reveals it,
+ * so a reader with no JavaScript never meets a control that does nothing.
  */
-import { wrapElements } from './rehype-wrap.mjs';
-
 export const LABELS = {
   plaintext: '',
   sh: 'Terminal',
@@ -56,11 +48,3 @@ export const codeBlockBar = (label) =>
       el('span', { ariaLive: 'polite', dataMlCopyLabel: '' }, [text('Copy')]),
     ]),
   ]);
-
-export const rehypeCodeBlocks = wrapElements({
-  tagName: 'pre',
-  wrap: (pre) => {
-    const lang = String(pre.properties?.dataLanguage ?? 'plaintext');
-    return el('div', { className: ['ml-code'] }, [codeBlockBar(LABELS[lang] ?? lang), pre]);
-  },
-});

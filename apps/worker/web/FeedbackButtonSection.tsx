@@ -76,8 +76,8 @@ export function FeedbackButtonSection({ kind, id }: { kind: 'project' | 'page'; 
         />
       </div>
       <p class="text-meta leading-body text-(--ds-gray-900)">
-        The script opens comment mode on your live page. With a CSP, allow https://marklayer.app in script-src, and
-        https://marklayer.app and wss://marklayer.app in connect-src.
+        The script opens comment mode on your live page. With a CSP, allow {APP_ORIGIN} in script-src, and {APP_ORIGIN}{' '}
+        and {APP_ORIGIN.replace('https://', 'wss://')} in connect-src.
       </p>
     </div>
   );

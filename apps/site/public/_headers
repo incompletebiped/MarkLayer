@@ -1,6 +1,5 @@
-# Marketing pages are served straight from the asset layer, so they never run
-# the Worker's HSTS middleware (apps/worker/src/index.ts). Reapply it here, and
-# restate the Cache-Control values the Hono routes used to send.
+# Content pages are served straight from the asset layer, so they never run
+# the Worker's HSTS middleware (apps/worker/src/index.ts). Reapply it here.
 #
 # Scoped deliberately: `/*` carries HSTS only. The SPA shell at `/` must not
 # inherit a one-hour max-age, or an app deploy would take an hour to reach
@@ -9,44 +8,12 @@
 /*
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
 
-# Self-hosted webfonts. Content-addressed by name — a new cut ships under a new
-# filename — so they can be cached for a year and never revalidated. The
-# crossorigin preload in BaseHead.astro makes these anonymous-mode requests, and
-# a font fetched in anonymous mode is cached separately from one that is not, so
-# the CORS header has to be here even though this is same-origin.
+# Self-hosted webfonts the app's stylesheet still loads. Content-addressed by
+# name, so they can be cached for a year. The CORS header is for crossorigin
+# preloads, which are cached apart from plain requests.
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
-
-/compare
-  Cache-Control: public, max-age=3600
-
-/alternatives
-  Cache-Control: public, max-age=3600
-
-/alternatives/*
-  Cache-Control: public, max-age=3600
-
-/use-cases
-  Cache-Control: public, max-age=3600
-
-/guides
-  Cache-Control: public, max-age=3600
-
-/guides/*
-  Cache-Control: public, max-age=3600
-
-/vs/*
-  Cache-Control: public, max-age=3600
-
-/for/*
-  Cache-Control: public, max-age=3600
-
-/pricing
-  Cache-Control: public, max-age=3600
-
-/about
-  Cache-Control: public, max-age=3600
 
 /support
   Cache-Control: public, max-age=3600
@@ -54,7 +21,10 @@
 /privacy
   Cache-Control: public, max-age=3600
 
-/pricing.md
+/mcp
+  Cache-Control: public, max-age=3600
+
+/mcp.md
   Cache-Control: public, max-age=86400
   Content-Type: text/markdown; charset=utf-8
 

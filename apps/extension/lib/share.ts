@@ -20,7 +20,7 @@ const API_BASE = `${APP_ORIGIN}/api/`;
  * origin); the absolute URL is what the extension dialog and the web info panel
  * need, since neither is guaranteed to be running on marklayer.app.
  */
-export const HOW_IT_WORKS_PATH = '/guides/how-marklayer-works';
+export const HOW_IT_WORKS_PATH = '/#how';
 export const HOW_IT_WORKS_URL = `${APP_ORIGIN}${HOW_IT_WORKS_PATH}`;
 
 export { nanoid };
@@ -143,7 +143,7 @@ export function getShareUrl(): string {
  * out twice — a drifted flag in one copy would hand users a command that fails.
  */
 export function claudeMcpCommand(roomId: string, origin = APP_ORIGIN): string {
-  return `claude mcp add --transport http marklayer ${mcpEndpoint(roomId, origin)}`;
+  return `claude mcp add --transport http redline ${mcpEndpoint(roomId, origin)}`;
 }
 
 /** Where the room answers MCP. The share link is the address, so there is nothing to install. */
@@ -152,8 +152,9 @@ export function mcpEndpoint(roomId: string, origin = APP_ORIGIN): string {
 }
 
 /** The stdio fallback, for a client that cannot reach a remote server yet. */
+// The npm package is upstream's build and defaults to marklayer.app, so name this server explicitly.
 export function npxMcpCommand(roomId: string): string {
-  return `npx -y marklayer-mcp --room ${roomId}`;
+  return `npx -y marklayer-mcp --room ${roomId} --api-base ${APP_ORIGIN}`;
 }
 
 /**

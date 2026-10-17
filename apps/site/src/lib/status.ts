@@ -22,8 +22,8 @@ export const STATUS_LABEL: Record<SystemStatus, string> = {
  * than telling a visitor the product is down because their wifi is.
  *
  * Relative on purpose. An absolute origin would make localhost report on
- * production, and same-origin is the case that matters: the app and all 55
- * content pages are served by the Worker that answers this route.
+ * production, and same-origin is the case that matters: the app and every
+ * content page are served by the Worker that answers this route.
  */
 export async function probeStatus(): Promise<SystemStatus> {
   const cached = readCache();
@@ -44,7 +44,7 @@ const CACHE_KEY = 'ml:status';
 const CACHE_MS = 60_000;
 
 /**
- * One probe per minute per visit, shared by the app and all 55 content pages.
+ * One probe per minute per visit, shared by the app and every content page.
  * Each is a separate document load, so without this a visitor reading four
  * pages pays four D1 + R2 round trips to be told the same thing.
  */

@@ -1,6 +1,6 @@
 import { MARK_ACCENT } from './brand';
 import { OG_HEADING_ADVANCES_PACKED } from './og-fonts';
-import { CARD, escapeXml, MARK_AXIS, mark, RIGHT_EDGE, SEPARATOR, SIGNATURE_MARK, TONE, TRACKING } from './og-svg';
+import { CARD, escapeXml, MARK_AXIS, RIGHT_EDGE, SEPARATOR, signature, TONE, TRACKING } from './og-svg';
 
 /**
  * The heading is fitted, not stepped: the largest size at which it still holds
@@ -161,7 +161,7 @@ export function pickWord({ lines, size }: HeadingLayout): Word | undefined {
   const last = lines[lines.length - 1];
   if (last === undefined) return undefined;
   const all = words({ line: last, size });
-  const brand = all.find((w) => w.text.toLowerCase() === 'marklayer');
+  const brand = all.find((w) => w.text.toLowerCase() === 'redline');
   if (brand) return brand;
   const long = all.filter((w) => w.text.length >= 4);
   const pool = long.length > 0 ? long : all;
@@ -246,8 +246,8 @@ const PIN_LABEL = 20;
 function pin({ cx, cy }: { cx: number; cy: number }): string {
   // 0.36em below the center is where Geist's digits actually sit centered; a
   // glyph's optical middle is not its box's. Weight 600, not the 500 the share
-  // card's pins use: white on the accent is a 3.2:1 ratio, which needs the extra
-  // stem to stay legible at the size a card is actually looked at.
+  // card's pins use: the extra stem keeps the digit legible at the size a card is
+  // actually looked at.
   return `<circle cx="${n(cx)}" cy="${n(cy)}" r="${PIN_RADIUS}" fill="${MARK_ACCENT}"/>
   <text x="${n(cx)}" y="${n(cy + PIN_LABEL * 0.36)}" text-anchor="middle" font-family="Geist" font-size="${PIN_LABEL}" font-weight="600" fill="${TONE.ink}">1</text>`;
 }
@@ -262,7 +262,7 @@ export interface PageOgCardParams {
 /**
  * The marketing pages' card: the page's heading set large, with the product's
  * own vocabulary drawn onto it — a pen stroke under the operative word and a
- * comment pinned to it. The artifact is the thing MarkLayer does, performed on
+ * comment pinned to it. The artifact is the thing Redline does, performed on
  * the page's own words, so no two pages share a card and none of it is a prop.
  *
  * Pure, like the share card's composer: no fonts, no rasterizer, no network, so
@@ -304,12 +304,12 @@ export function buildPageOgSvg({ heading, path }: PageOgCardParams): string {
   return `<svg width="${CARD.width}" height="${CARD.height}" viewBox="0 0 ${CARD.width} ${CARD.height}" xmlns="http://www.w3.org/2000/svg">
   <rect width="${CARD.width}" height="${CARD.height}" fill="${TONE.ground}"/>
 
-  ${mark({ ...SIGNATURE_MARK, fill: TONE.ink })}
+  ${signature()}
 
   ${heads}
 
   ${annotation}
 
-  <text x="${MARK_AXIS}" y="${COLOPHON_BASELINE}" font-family="Geist" font-size="22" letter-spacing="-0.1"><tspan fill="${TONE.ink}" font-weight="500">marklayer.app</tspan>${trail}</text>
+  <text x="${MARK_AXIS}" y="${COLOPHON_BASELINE}" font-family="Geist" font-size="22" letter-spacing="-0.1"><tspan fill="${TONE.ink}" font-weight="500">feedback.simplelocalweb.com</tspan>${trail}</text>
 </svg>`;
 }

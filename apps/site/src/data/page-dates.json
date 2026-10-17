@@ -1,50 +1,18 @@
 {
   "home": {
-    "published": "2026-03-18",
-    "modified": "2026-10-07"
-  },
-  "features": {
-    "published": "2026-09-17",
-    "modified": "2026-10-16"
-  },
-  "hub-compare": {
-    "published": "2026-01-16",
-    "modified": "2026-09-03"
-  },
-  "hub-alternatives": {
-    "published": "2026-02-05",
-    "modified": "2026-10-07"
-  },
-  "hub-use-cases": {
-    "published": "2026-02-23",
-    "modified": "2026-04-13"
-  },
-  "hub-guides": {
-    "published": "2026-08-15",
-    "modified": "2026-09-17"
-  },
-  "pricing": {
-    "published": "2026-01-28",
-    "modified": "2026-08-28"
+    "published": "2026-10-17",
+    "modified": "2026-10-17"
   },
   "support": {
-    "published": "2026-09-04",
-    "modified": "2026-09-04"
-  },
-  "about": {
-    "published": "2026-02-01",
-    "modified": "2026-03-22"
+    "published": "2026-10-17",
+    "modified": "2026-10-17"
   },
   "privacy": {
-    "published": "2026-02-24",
-    "modified": "2026-04-13"
-  },
-  "hub-changelog": {
-    "published": "2026-08-29",
-    "modified": "2026-10-11"
+    "published": "2026-10-17",
+    "modified": "2026-10-17"
   },
   "mcp": {
-    "published": "2026-10-16",
-    "modified": "2026-10-16"
+    "published": "2026-10-17",
+    "modified": "2026-10-17"
   }
 }

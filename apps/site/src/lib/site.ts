@@ -1,117 +1,39 @@
 export const ORIGIN = 'https://feedback.simplelocalweb.com';
+/** Upstream's store listing. The site no longer links it; apps/worker still imports it. */
 export const CHROME_STORE_URL = 'https://chromewebstore.google.com/detail/marklayer/fnfobegjifomgobgilaemihpcpidjamc';
 /** The fallback card, for anything with no heading of its own to draw. */
 export const OG_IMAGE = `${ORIGIN}/og.jpg`;
-/** YouTube id of the product demo, which `VideoEmbed` falls back to. Unset until a demo is published. */
-export const DEMO_VIDEO: string | undefined = undefined;
+
+export const PRODUCT_NAME = 'Redline';
+export const COMPANY_NAME = 'Simple Local Web';
+export const COMPANY_URL = 'https://simplelocalweb.com';
+export const CONTACT_EMAIL = 'hello@simplelocalweb.com';
+/** Redline is a fork of this project; Apache-2.0 asks that the attribution stays visible. */
+export const UPSTREAM_REPO_URL = 'https://github.com/thevrus/MarkLayer';
 
 /**
- * A card drawn for one page: its own heading, set large, with a stroke under the
- * operative word and a comment pinned to it.
- *
- * Rendered by the Worker (`/og/page.png`) rather than baked at build time, because
- * that is where the fonts and the rasterizer already live. The heading travels in
- * the URL for the same reason: these pages are static, so the Worker has no copy
- * of their content to look up. The result is cached in R2 by the hash of both
- * params, so a given page renders once.
+ * A card drawn for one page by the Worker (`/og/page.png`), from its own heading.
+ * The heading travels in the URL because these pages are static and the Worker
+ * has no copy of their content.
  */
 export function pageOgImage({ heading, path }: { heading: string; path: string }): string {
   const query = new URLSearchParams({ h: heading, p: path });
   return `${ORIGIN}/og/page.png?${query}`;
 }
+
 /**
- * The cross-tab channel `/thanks` uses to tell an editor still open in another
- * tab that a payment landed.
- *
- * It lives here because both ends read it: the static thank-you page in this
- * workspace, and the app in apps/worker, which already depends on this module
- * for `CHROME_STORE_URL`. The checkout opens in a new tab so the tab holding
- * unsaved annotations is never navigated, which is exactly why the two need a
- * way to talk. Same-origin only, and it carries no order data — just the fact.
+ * The cross-tab channel an editor listens on for a finished payment. Read by
+ * apps/worker/web/support-ui.ts; the static thank-you page that posted to it is gone.
  */
 export const SUPPORT_CHANNEL = 'marklayer:support';
 export const SUPPORT_PAID = 'paid';
 
-/**
- * The Polar checkout every support surface opens — the "Support MarkLayer"
- * product, pay-what-you-want with a $3 floor and $5 prefilled.
- *
- * It lives here for the same reason `SUPPORT_CHANNEL` does: three renderers open
- * it now (the app's support card, `/support`, and the footer link that points at
- * it), and a URL duplicated across two workspaces is a URL that goes stale in
- * one of them. apps/worker re-exports it from `web/support.ts`.
- *
- * No surface names the $5 in a button label: Polar is merchant of record and
- * adds VAT on top, so an EU supporter is charged $6.15. A button promising a
- * price the checkout then contradicts is a small lie. `/support` states the
- * floor and the VAT in prose instead, where there is room to be exact.
- *
- * Left empty and every surface degrades to its no-payment form rather than
- * offering a button that goes nowhere, which is also what should happen if the
- * product is ever retired.
- */
-export const POLAR_CHECKOUT_URL = 'https://buy.polar.sh/polar_cl_DBsDl9Ufd2O0mOEodJrcrIDpuOu2iEc0UqG4w4cXdk2';
-
-export const REPO_URL = 'https://github.com/thevrus/MarkLayer';
-export const AUTHOR_NAME = 'Dean Rusin';
-export const AUTHOR_EMAIL = 'hello@marklayer.app';
-
 /** apps/worker's Vite dev server, started alongside this one by `turbo run dev`. */
 export const WORKER_DEV = 'http://localhost:5173';
 
-/**
- * The nav sections, in the order the header renders them. One entry per section:
- * the label, the hub it links to, and every path prefix that counts as being
- * inside it — `/vs/pastel` is a comparison, `/for/qa` is a use case. A page in a
- * section suppresses its own nav link.
- */
+/** The header's links, in order. */
 export const SECTIONS = [
-  /* First in the row: what the product does comes before who it beats. It is
-     also the only hub that answers a "what can it do" query, which the compare
-     and alternatives pages were absorbing by default. */
-  { key: 'features', label: 'Features', href: '/features', prefixes: ['/features'] },
-  { key: 'compare', label: 'Compare', href: '/compare', prefixes: ['/compare', '/vs/'] },
-  { key: 'alternatives', label: 'Alternatives', href: '/alternatives', prefixes: ['/alternatives'] },
-  { key: 'use-cases', label: 'Use cases', href: '/use-cases', prefixes: ['/use-cases', '/for/'] },
-  { key: 'guides', label: 'Guides', href: '/guides', prefixes: ['/guides'] },
-  { key: 'changelog', label: 'Changelog', href: '/changelog', prefixes: ['/changelog'] },
-  { key: 'pricing', label: 'Pricing', href: '/pricing', prefixes: ['/pricing'] },
-  /* Last in the row on purpose, and it reads off the one before it: "Pricing"
-     answers what it costs, "Support" answers who pays for it. Reversed, or set
-     anywhere earlier, the word is ambiguous with a help desk — which this
-     project explicitly does not run. */
-  { key: 'support', label: 'Support', href: '/support', prefixes: ['/support'] },
+  { key: 'mcp', label: 'For developers', href: '/mcp' },
+  { key: 'support', label: 'Help', href: '/support' },
+  { key: 'privacy', label: 'Privacy', href: '/privacy' },
 ] as const;
-
-type Section = (typeof SECTIONS)[number]['key'];
-
-/** `/vs/pastel` → `compare`, `/for/qa` → `use-cases`. Undefined outside the nav. */
-export function sectionFor(path: string): Section | undefined {
-  return SECTIONS.find((s) => s.prefixes.some((prefix) => path.startsWith(prefix)))?.key;
-}
-
-const LAST_UPDATED_FORMAT = new Intl.DateTimeFormat('en-US', {
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'UTC',
-});
-
-/** "2026-04-12" → "April 2026". Matches the byline format the Worker shipped. */
-export function formatLastUpdated(iso: string): string {
-  return LAST_UPDATED_FORMAT.format(new Date(`${iso}T00:00:00Z`));
-}
-
-const RELEASE_DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'UTC',
-});
-
-/**
- * "2026-08-28" → "August 28, 2026". A release happened on a day, not in a month,
- * so the changelog states the day the month-level byline elsewhere would round off.
- */
-export function formatReleaseDate(iso: string): string {
-  return RELEASE_DATE_FORMAT.format(new Date(`${iso}T00:00:00Z`));
-}

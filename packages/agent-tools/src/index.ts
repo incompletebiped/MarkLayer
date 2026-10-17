@@ -28,7 +28,7 @@ import { z } from 'zod/mini';
 import { isWatchableOp } from './prompt';
 
 /**
- * Everything about MarkLayer's agent tools that is not a transport.
+ * Everything about Redline's agent tools that is not a transport.
  *
  * The schemas, the annotation projection and the validation used to live inside
  * `marklayer-mcp`, the stdio server published to npm, which put them out of reach
@@ -62,7 +62,7 @@ export function attachmentUrls(ids: string[] | undefined, apiBase: string): stri
  * markup) so the agent has everything it needs to act on the change without
  * round-tripping back to the page. `apiBase` is the room's own origin, so a
  * screenshot attachment resolves to a URL the agent can fetch regardless of
- * which MarkLayer deployment this room lives on.
+ * which Redline deployment this room lives on.
  */
 export function projectAnnotation(op: AnnotationOp, apiBase: string) {
   const common = {
@@ -324,7 +324,7 @@ export const TOOLS: ToolSpec[] = [
   },
   {
     name: 'marklayer_connect_room',
-    description: 'Connect to a MarkLayer room (annotation session) by URL or bare room id. Disconnects any prior room.',
+    description: 'Connect to a Redline room (annotation session) by URL or bare room id. Disconnects any prior room.',
     inputSchema: {
       type: 'object',
       additionalProperties: false,
@@ -332,7 +332,7 @@ export const TOOLS: ToolSpec[] = [
       properties: {
         room: {
           type: 'string',
-          description: 'Room URL like https://marklayer.app/s/abc123 or a bare room id like abc123.',
+          description: 'Room URL like https://feedback.simplelocalweb.com/s/abc123 or a bare room id like abc123.',
         },
         password: {
           type: 'string',

@@ -2,7 +2,6 @@
 import HomeContent from '../components/home/HomeContent.astro';
 import schema from '../data/home-schema.json';
 import dates from '../data/page-dates.json';
-import { getCurrentVersion } from '../lib/collections';
 import { OG_IMAGE, ORIGIN, WORKER_DEV } from '../lib/site';
 
 /**
@@ -13,38 +12,20 @@ import { OG_IMAGE, ORIGIN, WORKER_DEV } from '../lib/site';
  * hashed SPA bundle and stylesheet into it. That is why the entry <script> and
  * the theme-flash script are `is:inline` — Astro must leave them for Vite.
  *
- * Everything inside #app is prerendered marketing content that main.tsx wipes
- * on boot. It exists for crawlers and for first paint before the bundle lands.
+ * Everything inside #app is prerendered content that main.tsx wipes on boot.
+ * It exists for crawlers and for first paint before the bundle lands.
  */
-const title = 'MarkLayer · Free Webpage, PDF & Image Annotation. No Account.';
+const title = 'Redline by Simple Local Web · Mark up your website';
 const description =
-  'Free web app for annotating any live webpage, PDF or image. Paste a URL or drop a file, draw and comment on it, then share a link. No account, no email, no install. Open source.';
-const ogTitle = 'MarkLayer · Free Webpage, PDF & Image Annotation';
-const ogDescription =
-  'Free web app. Paste any URL or open a PDF or image, draw and comment on it, share a link. 100% free, anonymous by default. No account, no email, no sign-up, nothing to install.';
-const twitterDescription =
-  'Free web app. Paste a URL or open a PDF or image, draw and comment in your browser, share a link. Real-time collab. No account, no sign-up, nothing to install.';
+  "Circle a photo, point at a button, flag a typo. Every mark you make on your website lands on Simple Local Web's list, and you watch each one get checked off.";
+const ogTitle = "Redline · Mark it in red. We'll knock it out.";
+const ogDescription = description;
 
-/* The version and the modified date are derived, never stored in the graph: the
-   releases collection is the public version number (the changelog reads the same
-   entry) and page-dates.json is what the sitemap tells crawlers about `/`. Held
-   in the JSON, both drift the moment someone bumps one and not the other. */
-const softwareVersion = await getCurrentVersion();
+/* The modified date is page-dates.json's, the same value the sitemap tells crawlers about `/`. */
 const dateModified = dates.home.modified;
-
-/* home-schema.json's Chrome Extension node carries a real aggregateRating (5.0,
-   3 ratings) read off the Chrome Web Store listing on 2026-09-03 — not invented,
-   and not copied onto the WebApplication node, which has no review mechanism of
-   its own. Re-check the CWS listing occasionally and update the JSON by hand;
-   nothing here re-fetches it. */
-
 const ld = {
   ...schema,
-  '@graph': schema['@graph'].map((node) => {
-    if (node['@type'] === 'WebSite') return { ...node, dateModified };
-    if (node['@type'] === 'WebApplication') return { ...node, dateModified, softwareVersion };
-    return node;
-  }),
+  '@graph': schema['@graph'].map((node) => ({ ...node, dateModified })),
 };
 ---
 
@@ -59,12 +40,12 @@ const ld = {
     <meta property="og:description" content={ogDescription} />
     <meta property="og:image" content={OG_IMAGE} />
     <meta property="og:url" content={ORIGIN} />
-    <meta property="og:site_name" content="MarkLayer" />
+    <meta property="og:site_name" content="Redline" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={OG_IMAGE} />
     <meta name="twitter:title" content={ogTitle} />
-    <meta name="twitter:description" content={twitterDescription} />
+    <meta name="twitter:description" content={ogDescription} />
     <meta name="robots" content="max-image-preview:large, max-snippet:-1" />
     <link rel="canonical" href={`${ORIGIN}/`} />
     <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-readable summary" />
@@ -75,9 +56,12 @@ const ld = {
     <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    {/* Geist is self-hosted (see the @font-face block in apps/worker/web/style.css,
-        the Vite bundle this shell loads) — same origin, no preconnect needed. */}
-    <link rel="preload" href="/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap"
+    />
 
     <script type="application/ld+json" is:inline set:html={JSON.stringify(ld)} />
 

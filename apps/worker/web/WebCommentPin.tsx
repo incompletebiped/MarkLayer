@@ -18,6 +18,7 @@ import {
   getReplies,
   localUser,
   openContextMenu,
+  RESOLVED_PIN_COLOR,
   STATUS_LABELS,
   STATUS_STYLES,
   setOpStatus,
@@ -107,13 +108,13 @@ export function WebCommentPin({ op, scale: s, scrollY, frameDoc }: Props) {
             // A marker on someone else's page: flat fill, a surface-coloured ring
             // to separate it from whatever is behind, and one tight shadow. The
             // ring thickens on hover instead of the pin growing.
-            class="relative w-7 h-7 rounded-full text-white text-meta font-semibold
+            class="relative w-7 h-7 rounded-sm text-white text-meta font-semibold
                  grid place-items-center pointer-coarse:after:absolute pointer-coarse:after:-inset-2
                  shadow-[0_0_0_2px_var(--ds-background-100),0_1px_2px_oklch(0_0_0/0.25)]
                  transition-[box-shadow] duration-150 ease-out
                  group-hover/pin:shadow-[0_0_0_3px_var(--ds-background-100),0_1px_2px_oklch(0_0_0/0.3)]"
             style={{
-              background: op.color,
+              background: resolved || approved ? RESOLVED_PIN_COLOR : op.color,
               opacity: styles.pinOpacity,
               // A phone fits a desktop page at a quarter size; the pin is a control,
               // not part of the page, so it keeps its own size to stay tappable. The

@@ -39,7 +39,7 @@ ${message ? `<p class="alert" role="alert">${message}</p>` : ''}
 <button type="submit">Open</button>
 </form>
 <small>If you own this link, sign in to open it without a password.</small>`;
-  return new Response(page({ title: 'Password required · MarkLayer', body }), {
+  return new Response(page({ title: 'Password required · Redline', body }), {
     status: STATUS[reason],
     headers: HTML_HEADERS,
   });

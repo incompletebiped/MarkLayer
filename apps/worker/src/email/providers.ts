@@ -7,7 +7,7 @@ import { type EmailEnv, type EmailSendBinding, type Mailer, UndeliverableAddress
  */
 
 /** The display name on every outgoing message, whichever provider carries it. */
-const FROM_NAME = 'MarkLayer';
+const FROM_NAME = 'Redline';
 
 /**
  * Cloudflare Email Service. Sending to an address that is not a verified
@@ -75,7 +75,7 @@ export function consoleMailer(): Mailer {
  * can fail that quietly is not a switch worth having.
  */
 export function mailerFor(env: EmailEnv): Mailer {
-  const from = env.MAIL_FROM ?? 'login@marklayer.app';
+  const from = env.MAIL_FROM ?? 'login@simplelocalweb.com';
   // Auto-detect resolves to a name, so a pin and an unset variable then take the
   // same validated branch instead of each building the mailers separately.
   const provider = env.MAIL_PROVIDER || (env.EMAIL ? 'cloudflare' : env.RESEND_API_KEY ? 'resend' : 'console');

@@ -1,29 +1,15 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
-import LinkGrid from '../components/LinkGrid.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import SiteHeader from '../components/SiteHeader.astro';
-import { ORIGIN } from '../lib/site';
-
-// This workspace deliberately has no `index.astro`: `/` is the app's entry
-// point and is served by the Worker (SPA shell + `?url=` handoff to the
-// Viewer). Astro's dev server falls back to this page for `/`, so it doubles
-// as the directory you land on when running `bun dev` here.
-const sections = [
-  { href: '/compare', label: 'Comparisons' },
-  { href: '/alternatives', label: 'Alternatives' },
-  { href: '/use-cases', label: 'Use cases' },
-  { href: '/pricing', label: 'Pricing' },
-  { href: '/about', label: 'About' },
-  { href: '/privacy', label: 'Privacy' },
-];
+import { CONTACT_EMAIL, ORIGIN } from '../lib/site';
 ---
 
 <html lang="en">
   <head>
     <BaseHead
-      title="Page not found · MarkLayer"
-      description="That page does not exist. Browse MarkLayer's comparisons, alternatives, and use-case guides."
+      title="Page not found · Redline"
+      description="That page does not exist. Head back to Redline or get in touch with Simple Local Web."
       canonical={`${ORIGIN}/404`}
       ogType="website"
       noindex
@@ -31,14 +17,17 @@ const sections = [
   </head>
   <body>
     <SiteHeader path="/404" />
-    <div class="ml-shell">
-      <h1>That page doesn't exist.</h1>
-      <p class="ml-lede">The link may be out of date. Everything on the site is one of these:</p>
-      <LinkGrid links={sections} />
+    <main class="ml-shell">
+      <h1>Nothing here.</h1>
+      <p class="ml-lede">That link may be old, or it may have a typo in it.</p>
       <p>
-        Or go back to <a href="/">marklayer.app</a> and annotate a page.
+        <a class="ml-cta" href="/">Back to Redline</a>
       </p>
-    </div>
+      <p class="ml-meta mt-6">
+        Looking for a page we sent you? Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> and we will send it
+        again.
+      </p>
+    </main>
     <SiteFooter />
   </body>
 </html>

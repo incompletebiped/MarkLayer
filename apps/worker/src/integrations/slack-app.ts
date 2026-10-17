@@ -244,7 +244,7 @@ export function parentMessage({ op, roomUrl, origin }: { op: DrawOp; roomUrl: st
   return [
     `*${escapeMrkdwn(item.author)}* — ${item.kind}${priority}: ${escapeMrkdwn(oneLine(item.text))}`,
     ...(attachmentLinks({ item, roomUrl: origin }) ?? []),
-    `<${roomUrl}|Open in MarkLayer>`,
+    `<${roomUrl}|Open in Redline>`,
   ].join('\n');
 }
 

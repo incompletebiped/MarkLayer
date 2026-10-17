@@ -17,9 +17,9 @@ const { published, modified } = dates.mcp;
 
 const path = '/mcp';
 const h1 = 'Give the review to your agent.';
-const title = 'MarkLayer MCP: Let Claude Code, Cursor or Codex Work Your Review';
+const title = 'Redline for developers: connect Claude Code, Cursor or Codex';
 const description =
-  'Every MarkLayer share link is a remote MCP server. Add it to Claude Code, Claude, Codex, Cursor or VS Code in one line and your coding agent reads what reviewers marked on the page, fixes it, and ticks each comment off while they watch.';
+  'Every Redline link is a remote MCP server. Add it to Claude Code, Claude, Codex, Cursor or VS Code in one line and your coding agent reads what reviewers marked on the page, fixes it, and ticks each comment off while they watch.';
 
 /* Real marks only, on one 24-grid: simple-icons where it has the brand, and
    the set the footer already uses for Codex. VS Code wears the Copilot mark,
@@ -52,20 +52,20 @@ const agents: { label: string; mark: Mark }[] = [
 
 const qa: QA[] = [
   {
-    q: 'Does MarkLayer have an MCP server?',
-    a: `Yes, two ways in to the same ${AGENT_TOOLS.length} tools. Every share link answers MCP over Streamable HTTP at its own address plus /mcp, so a client that supports remote servers connects with one command and nothing installed. For clients that only run local servers, the same tools ship on npm as marklayer-mcp.`,
+    q: 'Does Redline have an MCP server?',
+    a: `Yes, two ways in to the same ${AGENT_TOOLS.length} tools. Every Redline link answers MCP over Streamable HTTP at its own address plus /mcp, so a client that supports remote servers connects with one command and nothing installed. For clients that only run local servers, the same tools ship on npm as marklayer-mcp (the upstream MarkLayer package; set MARKLAYER_API_BASE to point it here).`,
   },
   {
     q: 'Do I need an API key or an account to connect an agent?',
-    a: 'No. A MarkLayer share link is its own access token: whoever holds the link can open it, and the MCP endpoint follows the same rule. There is no OAuth step and no key to paste. If the owner has locked the link with a password, send it as a header (Authorization: Bearer <password>; in Claude Code, --header) or use the npm package with MARKLAYER_PASSWORD.',
+    a: 'No. A Redline link is its own access token: whoever holds the link can open it, and the MCP endpoint follows the same rule. There is no OAuth step and no key to paste. If the owner has locked the link with a password, send it as a header (Authorization: Bearer <password>; in Claude Code, --header) or use the npm package with MARKLAYER_PASSWORD.',
   },
   {
-    q: 'Which coding agents work with MarkLayer?',
+    q: 'Which coding agents work with Redline?',
     a: 'Any MCP client. This page has setup for Claude Code, Claude, Codex, Cursor and VS Code. Windsurf, Zed, Cline, Gemini CLI and anything else that reads an mcpServers config work through either the remote URL or the npm package.',
   },
   {
     q: 'Can the agent change the website I annotated?',
-    a: 'Not through MarkLayer. MarkLayer never touches the page’s source. The agent reads the comments, edits your code with its own tools, and reports back in the room. What it can change in MarkLayer is the review itself: statuses, replies, its own comments, suggested edits, a checklist and polls.',
+    a: 'Not through Redline. Redline never touches the page’s source. The agent reads the comments, edits your code with its own tools, and reports back in the room. What it can change in Redline is the review itself: statuses, replies, its own comments, suggested edits, a checklist and polls.',
   },
   {
     q: 'Why connect over the remote URL instead of npm?',
@@ -73,24 +73,24 @@ const qa: QA[] = [
   },
   {
     q: 'How do I know the connection worked?',
-    a: 'Seeing the server listed is not proof. Ask the agent to call marklayer_room_info: it should answer with the URL the link annotates. A 401 means the link’s owner has locked it, and it wants the password. If the agent says it has no MarkLayer tools, the session predates the config; start a new one.',
+    a: 'Seeing the server listed is not proof. Ask the agent to call marklayer_room_info: it should answer with the URL the link annotates. A 401 means the link’s owner has locked it, and it wants the password. If the agent says it has no Redline tools, the session predates the config; start a new one.',
   },
 ];
 
 const schema = [
   articleSchema({ h1, description, path, published, modified }),
   howToSchema({
-    name: 'Connect Claude Code to a MarkLayer share link',
-    description: 'Add a MarkLayer room as a remote MCP server and let the agent work its annotations.',
+    name: 'Connect Claude Code to a Redline link',
+    description: 'Add a Redline link as a remote MCP server and let the agent work its annotations.',
     steps: [
-      { name: 'Copy the MCP address', text: 'Open the Details panel on any MarkLayer link. The MCP address is the link plus /mcp.' },
-      { name: 'Add the server', text: `Run: claude mcp add --transport http marklayer ${ROOM_MCP_URL}` },
+      { name: 'Copy the MCP address', text: 'Open the Details panel on any Redline link. The MCP address is the link plus /mcp.' },
+      { name: 'Add the server', text: `Run: claude mcp add --transport http redline ${ROOM_MCP_URL}` },
       { name: 'Load the tools', text: 'Run /mcp in Claude Code, or start a new session, so the tools are listed.' },
       { name: 'Check it', text: 'Ask the agent to call marklayer_room_info. It answers with the URL under review.' },
     ],
   }),
   faqSchema(qa),
-  breadcrumbSchema([{ name: 'MarkLayer', path: '/' }, { name: 'MCP' }]),
+  breadcrumbSchema([{ name: 'Redline', path: '/' }, { name: 'MCP' }]),
 ];
 ---
 
@@ -111,9 +111,9 @@ const schema = [
     <SiteHeader path={path} />
     <main class="ml-shell">
       <section class="mx-auto max-w-[760px] pt-10 text-center sm:pt-16">
-        <h1 class="mcp-voice text-display text-ink text-balance">{h1}</h1>
-        <p class="mcp-voice mx-auto mt-5 max-w-[560px] text-lede text-meta text-pretty">
-          Every MarkLayer link is an MCP server. Your coding agent reads what reviewers marked on the page, fixes it,
+        <h1 class="text-display text-ink text-balance">{h1}</h1>
+        <p class="mx-auto mt-5 max-w-[560px] text-lede text-meta text-pretty">
+          Every Redline link is an MCP server. Your coding agent reads what reviewers marked on the page, fixes it,
           and ticks each comment off while they watch.
         </p>
       </section>
@@ -165,7 +165,7 @@ const schema = [
       </section>
 
       <section class="mx-auto mt-24 max-w-[960px] sm:mt-32">
-        <h2 class="mcp-voice m-0 text-title text-ink text-balance">
+        <h2 class="m-0 text-title text-ink text-balance">
           One comment, start to finish.
           <span class="text-meta"> The reviewer never leaves the page. The agent never asks what was clicked.</span>
         </h2>
@@ -242,7 +242,7 @@ const schema = [
       </section>
 
       <section class="mx-auto mt-24 max-w-[760px] text-center sm:mt-32">
-        <p class="mcp-voice m-0 text-heading text-ink">Any MCP client.</p>
+        <p class="m-0 text-heading text-ink">Any MCP client.</p>
         <ul class="m-0 mt-6 flex list-none flex-wrap items-center justify-center gap-x-7 gap-y-3 p-0 text-ui text-ink">
           {
             agents.map((a) => (
@@ -262,7 +262,7 @@ const schema = [
       </section>
 
       <section class="mx-auto mt-24 max-w-[760px] sm:mt-32">
-        <h2 class="mcp-voice m-0 text-title text-ink text-balance">
+        <h2 class="m-0 text-title text-ink text-balance">
           {AGENT_TOOLS.length} tools.
           <span class="text-meta"> Everything the room can tell an agent, and everything an agent can do back.</span>
         </h2>
@@ -288,7 +288,7 @@ const schema = [
       </section>
 
       <section class="mx-auto mt-24 max-w-[760px] sm:mt-32">
-        <h2 class="mcp-voice m-0 text-title text-ink text-balance">
+        <h2 class="m-0 text-title text-ink text-balance">
           It works the other way too.
           <span class="text-meta"> When the agent has built something, it hands you a room instead of a paragraph.</span>
         </h2>
@@ -300,7 +300,7 @@ const schema = [
         </p>
         <p class="mt-4 text-body text-ink text-pretty">
           Agents forget a tool exists unless something reminds them. Paste this into <code>CLAUDE.md</code> or
-          <code>AGENTS.md</code> and yours will reach for MarkLayer on its own:
+          <code>AGENTS.md</code> and yours will reach for Redline on its own:
         </p>
         <CodeBlock code={MCP_HABIT} lang="markdown" label="CLAUDE.md / AGENTS.md" />
         <p class="text-body text-ink text-pretty">Or just say it:</p>
@@ -316,10 +316,9 @@ const schema = [
       </section>
 
       <section class="mx-auto mt-20 mb-24 max-w-[760px] text-center sm:mt-28">
-        <p class="mcp-voice m-0 text-title text-ink text-balance">Free, with no account, for everyone on the link.</p>
+        <p class="m-0 text-title text-ink text-balance">Free, with no account, for everyone on the link.</p>
         <p class="mt-4 text-body text-meta">
-          <a href="/">Annotate a page</a> · <a href="/features">Every feature</a> ·
-          <a href="/guides/bug-report-mcp-servers">How other tools’ MCP servers compare</a>
+          <a href="/">Open Redline</a> · <a href="/support">Help</a> · <a href="/mcp.md">Setup for agents</a>
         </p>
       </section>
     </main>
@@ -328,12 +327,6 @@ const schema = [
     <style>
       @reference "../styles/global.css";
 
-      /* The landing page's own voice, `--ml-font-voice` in apps/worker/web/style.css:
-         a regular 400 Arial, hierarchy from size and tone rather than mass. */
-      .mcp-voice {
-        font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
-        font-weight: 400;
-      }
       .mcp-tab {
         @apply inline-flex h-9 cursor-pointer items-center gap-2 rounded-full border-0 bg-transparent px-3.5 text-ui text-meta transition-colors duration-150;
       }

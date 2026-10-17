@@ -242,7 +242,7 @@ const webhook: Provider = {
       name: 'url',
       label: 'Endpoint',
       type: 'url',
-      placeholder: 'https://example.com/hooks/marklayer',
+      placeholder: 'https://example.com/hooks/redline',
       help: 'Receives a JSON body. Private and loopback addresses are refused.',
     },
   ],
@@ -424,7 +424,7 @@ const github: Provider = {
         // decides it is next, and a create call should not change under us.
         'X-GitHub-Api-Version': '2022-11-28',
         // GitHub refuses a request with no User-Agent.
-        'User-Agent': 'MarkLayer',
+        'User-Agent': 'Redline',
       },
       body: JSON.stringify({ title: content.title, body: content.body }),
     };

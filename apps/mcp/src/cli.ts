@@ -8,16 +8,17 @@ interface Args {
   help: boolean;
 }
 
-const HELP = `marklayer-mcp — bridge MarkLayer annotations to AI coding agents over MCP.
+const HELP = `marklayer-mcp — bridge Redline annotations to AI coding agents over MCP.
 
 Usage:
   marklayer-mcp [options]
 
 Options:
-  --room <url-or-id>   Connect to a specific MarkLayer room at startup. Accepts
-                       a full share URL (https://marklayer.app/s/abc123) or a
-                       bare id. Otherwise the agent must call marklayer_connect_room.
-  --api-base <url>     Override the MarkLayer worker base URL (default https://marklayer.app).
+  --room <url-or-id>   Connect to a specific Redline room at startup. Accepts
+                       a full share URL (https://feedback.simplelocalweb.com/s/abc123)
+                       or a bare id. Otherwise the agent must call marklayer_connect_room.
+  --api-base <url>     Override the Redline server base URL
+                       (default https://feedback.simplelocalweb.com).
                        Useful when running against a local dev worker.
   --agent <name>       Identifier shown to humans for this agent. Default: "claude-code".
   --help, -h           Show this help.
@@ -33,7 +34,7 @@ Environment:
 
 function parseArgs(argv: string[]): Args {
   const out: Args = {
-    apiBase: process.env.MARKLAYER_API_BASE ?? 'https://marklayer.app',
+    apiBase: process.env.MARKLAYER_API_BASE ?? 'https://feedback.simplelocalweb.com',
     room: process.env.MARKLAYER_ROOM ?? null,
     agentId: process.env.MARKLAYER_AGENT ?? 'claude-code',
     help: false,

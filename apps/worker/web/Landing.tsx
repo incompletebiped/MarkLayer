@@ -1,638 +1,354 @@
-import { CommentPopover } from '@ext/components/CommentPopover';
-import { InspectorLayer } from '@ext/components/InspectorLayer';
 import { Toasts } from '@ext/components/Toasts';
-import { Toolbar } from '@ext/components/Toolbar';
-import { AgentMark } from '@ext/lib/agents';
-import { activeTool, color, comments as commentsComputed, isDrawingTool, lineWidth, selections } from '@ext/lib/state';
-import type { TextOp } from '@ext/lib/types';
-import { agentLabel, cn } from '@marklayer/types';
-import copy from '@site/data/home-copy.json';
-import { ASK_AI, ASK_AI_LABEL, COLOPHON, FOOTER_COLUMNS, TRADEMARK_NOTICE } from '@site/lib/footer';
-import { CHROME_STORE_URL } from '@site/lib/site';
-import { ArrowUpRight, type LucideIcon, Plus } from 'lucide-preact';
-import { nanoid } from 'nanoid';
+import { cn, UPLOAD_ACCEPT } from '@marklayer/types';
+import { COLOPHON, FOOTER_COLUMNS } from '@site/lib/footer';
+import { Check } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
-import { siProducthunt } from 'simple-icons';
-import { capture } from './analytics';
-import { ChannelCycle } from './ChannelCycle';
-import { FakeCursors } from './FakeCursors';
-import { frameViewport } from './iframeOverlay';
-import { ChromeIcon, ChromeStoreLink } from './landing/ChromeStoreLink';
-import { AGENT_IDS, AGENT_MOMENTS, COMPARISON_NAMES, COMPARISONS, FAQ, FEATURES, NAV_LINKS } from './landing/content';
-import { DemoStage } from './landing/DemoStage';
-import { HeroSource } from './landing/HeroSource';
-import { McpCommand } from './landing/McpCommand';
-import { AgentRow, Card, MarginNote, ProblemRow, ProofGrid } from './landing/Proof';
-import { useLandingCanvas } from './landing/useLandingCanvas';
-import { useLandingPresence } from './landing/useLandingPresence';
-import { useLandingShortcuts } from './landing/useLandingShortcuts';
-import { GithubLink, ICON_LINK_CLS, Logo, TextInputOverlay } from './shared';
-import { commentPopover, embedInView, isMobileDevice, pushDeviceOp, selectionPopover, textInput } from './signals';
-import { STATUS_LABEL, systemStatus } from './status';
-import { WebCommentPin } from './WebCommentPin';
-import { WebSelectionHighlight } from './WebSelectionHighlight';
-import { WebSelectionPopover } from './WebSelectionPopover';
+import { useRef } from 'preact/hooks';
+import { useLandingUpload } from './landing/useLandingUpload';
+import { Wordmark } from './shared';
+import { navigateTo, withScheme } from './signals';
 
-/* One display step for every section head and one reading step for every
-   paragraph, so no section sets its own scale. The measure is in ems so it
-   holds about fifty characters a line at every size the step takes. */
-const HEAD_CLS = 'lp-display mx-auto max-w-[26em] text-center text-statement text-balance text-ml-fg';
-const BODY_CLS = 'm-0 text-lede leading-prose text-ml-fg/60';
+const NAV_LINKS = [
+  { label: 'How it works', href: '#how' },
+  { label: 'For clients', href: '#clients' },
+  { label: 'Simple Local Web', href: 'https://simplelocalweb.com' },
+];
 
-/** A section head as figma.com sets one: the claim in ink, its support run on after it in grey, at one size. */
-function SectionHead({ title, children }: { title: ComponentChildren; children?: ComponentChildren }) {
+const STEPS = [
+  { title: 'We send you a link', body: 'It opens your website, as it is right now. No account, nothing to install.' },
+  {
+    title: 'You mark it up',
+    body: 'Circle things, draw arrows, pin a note, or flag a line of text. Right on the page.',
+  },
+  {
+    title: 'We check it off',
+    body: 'Every mark lands on our list. You watch each one turn from red to done.',
+  },
+];
+
+const MARKS = [
+  { title: 'Circle and point', body: 'Draw around a photo or an arrow at a button. Pen, shapes and arrows.' },
+  { title: 'Pin a note', body: 'Click anywhere to leave a numbered note. Reply back and forth on it.' },
+  { title: 'Flag the words', body: 'Highlight a sentence and say what it should say instead.' },
+  { title: 'Show us', body: 'Attach a screenshot or a photo, or record a quick voice note.' },
+];
+
+/** The demo board's list, in the design's own words. The last one is already done. */
+const DEMO_ITEMS = [
+  { n: 1, text: 'Logo looks fuzzy on my phone' },
+  { n: 2, text: 'Use the truck photo here instead' },
+  { n: 3, text: 'Make this button bigger, say “Book now”' },
+  { n: 4, text: 'Footer hours say Sunday', done: true },
+];
+
+const SECTION_LABEL_CLS = 'm-0 font-display text-sub font-bold uppercase tracking-eyebrow text-ml-brand';
+const CARD_CLS = 'rounded-xl border border-ml-rule bg-white p-6';
+
+function Section({
+  id,
+  label,
+  title,
+  children,
+}: {
+  id: string;
+  label: string;
+  title: string;
+  children: ComponentChildren;
+}) {
   return (
-    <div class={HEAD_CLS}>
-      <h2 class="inline">{title}</h2>
-      {children && (
-        <>
-          {' '}
-          <p class="m-0 inline text-ml-fg/50">{children}</p>
-        </>
+    <section id={id} class="scroll-mt-24 py-16 sm:py-24">
+      <p class={SECTION_LABEL_CLS}>{label}</p>
+      <h2 class="mt-3 max-w-[18em] font-display text-section font-extrabold uppercase text-ml-brand">{title}</h2>
+      <div class="mt-10">{children}</div>
+    </section>
+  );
+}
+
+function Pin({ n, done, class: className }: { n: number; done?: boolean; class?: string }) {
+  return (
+    <span
+      class={cn(
+        'absolute grid size-7 place-items-center rounded-sm text-ui-lg font-bold text-white shadow-[0_2px_6px_rgb(0_0_0/0.2)]',
+        done ? 'bg-ml-brand' : 'bg-ml-mark',
+        className,
       )}
+    >
+      {n}
+    </span>
+  );
+}
+
+/**
+ * A client's site with four marks on it and the list they became: the product, drawn flat.
+ * The greens and greys are the pretend client's own site, not Redline's palette.
+ */
+function DemoBoard() {
+  return (
+    <div class="flex flex-col gap-3.5 sm:flex-row" aria-hidden="true">
+      <div class="relative flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-[10px] border border-ml-rule bg-[#fafbfc]">
+        <div class="flex h-[30px] items-center gap-1.5 bg-[#eef1f5] px-3">
+          <span class="size-[9px] rounded-full bg-ml-border" />
+          <span class="size-[9px] rounded-full bg-ml-border" />
+          <span class="size-[9px] rounded-full bg-ml-border" />
+          <span class="ml-2.5 text-mini text-ml-muted">staging.clientsite.com</span>
+        </div>
+        <div class="relative flex flex-1 flex-col gap-3 p-[22px]">
+          <div class="h-3.5 w-2/5 rounded-[3px] bg-[#2f5d50]" />
+          <div class="h-[110px] rounded-md bg-[#d7e3da]" />
+          <div class="h-2.5 w-4/5 rounded-[3px] bg-ml-rule" />
+          <div class="h-2.5 w-[65%] rounded-[3px] bg-ml-rule" />
+          <div class="flex gap-2">
+            <div class="h-[30px] w-[110px] rounded bg-[#2f5d50]" />
+            <div class="h-[30px] w-[90px] rounded border border-[#2f5d50]" />
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="h-[60px] rounded bg-[#eef1f5]" />
+            <div class="h-[60px] rounded bg-[#eef1f5]" />
+            <div class="h-[60px] rounded bg-[#eef1f5]" />
+          </div>
+
+          <div class="absolute top-[50px] right-3 left-3 h-[130px] -rotate-2 rounded-[50%] border-[3px] border-ml-mark" />
+          <svg
+            class="absolute top-[196px] left-[150px] text-ml-mark"
+            aria-hidden="true"
+            width="90"
+            height="56"
+            viewBox="0 0 90 56"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M86 50C60 46 30 34 8 12" />
+            <path d="M8 26L8 12L22 12" />
+          </svg>
+          <Pin n={1} class="top-3.5 left-[150px]" />
+          <Pin n={2} class="top-11 right-4" />
+          <Pin n={3} class="top-[236px] left-[236px]" />
+          <Pin n={4} done class="bottom-7 left-6" />
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2 sm:w-[210px]">
+        <p class="m-0 px-0.5 pt-0.5 pb-1 font-display text-sub font-bold uppercase text-ml-fg">
+          Redlines · {DEMO_ITEMS.length}
+        </p>
+        {DEMO_ITEMS.map(({ n, text, done }) => (
+          <div
+            key={n}
+            class={cn(
+              'flex gap-2 rounded-lg border border-ml-rule p-2.5 text-ui leading-[1.4]',
+              done ? 'bg-ml-bg text-ml-muted' : 'bg-white',
+            )}
+          >
+            {done ? (
+              <span class="grid size-4 shrink-0 place-items-center rounded-[3px] bg-ml-brand text-white">
+                <Check size={11} strokeWidth={4} />
+              </span>
+            ) : (
+              <span class="size-4 shrink-0 rounded-[3px] border-2 border-ml-border" />
+            )}
+            <span class={cn(done && 'line-through')}>
+              {done ? (
+                `${n} ${text}`
+              ) : (
+                <>
+                  <strong class="text-ml-mark">{n}</strong> {text}
+                </>
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-/** One feature, as a compact card: a bare mark, the claim, a line of support. */
-function FeatureCard({ title, desc, icon: Icon }: { title: string; desc: string; icon: LucideIcon }) {
+/** Paste an address to start a board on that page, or hand over a PDF or photo instead. */
+function StartForm() {
+  const { fileInputRef, uploading, dragging, uploadFile } = useLandingUpload();
+  const inputRef = useRef<HTMLInputElement>(null);
+
   return (
-    <Card class="px-7 pt-7 pb-8 sm:px-8 sm:pt-8 sm:pb-9">
-      <Icon size={24} strokeWidth={1.5} class="mb-7 block text-ml-fg" aria-hidden="true" />
-      <h3 class="lp-display m-0 text-title text-ml-fg text-balance">{title}</h3>
-      <p class={cn(BODY_CLS, 'mt-2 text-pretty')}>{desc}</p>
-    </Card>
+    <div id="start" class="scroll-mt-24">
+      <form
+        class="flex max-w-[480px] flex-col gap-2 sm:flex-row"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const input = inputRef.current?.value.trim();
+          if (input) navigateTo({ url: withScheme(input), source: 'hero_form' });
+        }}
+      >
+        <label for="rl-url" class="sr-only">
+          Website address
+        </label>
+        {/* text-base: iOS Safari zooms the page when a focused field's text is under 16px. */}
+        <input
+          id="rl-url"
+          ref={inputRef}
+          name="url"
+          type="text"
+          inputMode="url"
+          autocomplete="url"
+          placeholder={dragging.value ? 'Let go to open it…' : 'Paste your site’s address'}
+          class="h-13 w-full min-w-0 rounded-lg sm:flex-1 border-2 border-ml-border bg-white px-4 text-base text-ml-fg outline-none placeholder:text-ml-muted focus:border-ml-brand"
+        />
+        <button
+          type="submit"
+          class="h-13 cursor-pointer rounded-lg border-none bg-ml-btn px-[22px] text-base font-bold text-ml-btn-fg transition-colors hover:bg-ml-btn-hover"
+        >
+          Start a redline
+        </button>
+      </form>
+      <p class="mt-3 mb-0 text-ui-lg text-ml-muted">
+        Got a PDF or a photo instead?{' '}
+        <button
+          type="button"
+          disabled={uploading.value !== null}
+          onClick={() => fileInputRef.current?.click()}
+          class="cursor-pointer border-none bg-transparent p-0 text-ui-lg font-semibold text-ml-brand underline underline-offset-2 hover:text-ml-btn-hover disabled:cursor-progress disabled:opacity-60"
+        >
+          {uploading.value ? 'Uploading…' : 'Upload it'}
+        </button>
+      </p>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={UPLOAD_ACCEPT}
+        hidden
+        onChange={(e) => {
+          const file = e.currentTarget.files?.[0];
+          // Cleared so picking the same file twice still fires.
+          e.currentTarget.value = '';
+          if (file) void uploadFile(file);
+        }}
+      />
+    </div>
   );
 }
 
-/* The rhythm: every section opens with the same space above its head, and a
-   head sits one step above the cards it introduces. */
-const SECTION_CLS = 'relative pt-28 sm:pt-36';
-const CARDS_CLS = 'mt-12 sm:mt-14';
-
-/**
- * The marketing page, which is also a live board: every mark on the first screen
- * is a real op on the real op stream, drawn with the product's own canvas and
- * toolbar.
- *
- * The behaviour that makes that true lives in `./landing` — the drawing engine,
- * the keyboard layer, the seeded pin, uploads and presence each as one hook — so
- * what is left here is the composition. It was one 1,277-line component with all
- * six concerns interleaved above the JSX.
- */
+/** The landing page, from the Redline brand sheet: navy carries the name, red is only ever a mark. */
 export function Landing() {
-  const { canvasRef, onDown } = useLandingCanvas();
-  useLandingShortcuts();
-  useLandingPresence();
-
-  const tool = activeTool.value;
-  const showCanvas = isDrawingTool(tool) && tool !== 'comment' && tool !== 'text' && tool !== 'selection';
-  const showTextCursor = tool === 'text';
-  const showCommentCursor = tool === 'comment';
-  const comments = commentsComputed.value;
-
   return (
-    <>
-      {/* The board. Every mark on the first screen is real: the canvas, the
-          toolbar and the strokes are the product's own, on its real op stream. */}
-      <div class="ml-force-light lp-voice relative min-h-screen overflow-x-clip lp-board">
-        {/* Glass, sticky, and on the frame's rails: the wordmark starts on the
-            left rail and the install button ends on the right one. */}
-        <header class="lp-nav sticky top-0 z-2147483647" data-away={embedInView.value ? 'true' : undefined}>
-          <nav class="mx-auto flex h-14 w-full max-w-page items-center justify-between gap-6 px-6 sm:px-10">
-            <a href="/" class="flex items-center gap-2 no-underline">
-              <Logo size={26} />
-              <span class="font-ui text-lede font-semibold tracking-brand text-ml-fg">MarkLayer</span>
-            </a>
-            <div class="flex items-center gap-0.5 sm:gap-1">
-              <div class="mr-1 hidden items-center sm:flex">
-                {NAV_LINKS.map(({ label, href }) => (
-                  <a
-                    key={href}
-                    href={href}
-                    class="whitespace-nowrap rounded-full px-3 py-1.5 text-body text-ml-fg/75 no-underline transition-colors hover:bg-ml-fg/[0.05] hover:text-ml-fg"
-                  >
-                    {label}
-                  </a>
-                ))}
-              </div>
+    <div class="ml-force-light min-h-screen bg-ml-bg font-ui text-ml-fg">
+      <header class="sticky top-0 z-10 border-b border-ml-rule bg-white/95 backdrop-blur">
+        <nav class="mx-auto flex h-[72px] w-full max-w-[1280px] items-center justify-between gap-6 px-4 sm:px-10">
+          <a href="/" class="no-underline">
+            <Wordmark />
+          </a>
+          <div class="flex items-center gap-7 text-body font-medium">
+            {NAV_LINKS.map(({ label, href }) => (
               <a
-                href="https://www.producthunt.com/posts/marklayer"
-                target="_blank"
-                rel="noopener"
-                class={cn(ICON_LINK_CLS, 'text-ml-fg/60 hover:text-ml-fg')}
+                key={href}
+                href={href}
+                class="hidden text-ml-slate no-underline transition-colors hover:text-ml-brand md:inline"
               >
-                <span class="sr-only">Product Hunt</span>
-                <svg class="size-[18px] fill-current" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d={siProducthunt.path} />
-                </svg>
+                {label}
               </a>
-              <GithubLink dark />
-              {!isMobileDevice && (
-                <a
-                  href={CHROME_STORE_URL}
-                  target="_blank"
-                  rel="noopener"
-                  class="lp-cta ml-2 hidden h-8 items-center whitespace-nowrap rounded-full px-3.5 text-body text-white no-underline transition-colors lg:inline-flex"
-                  onClick={() => capture('extension_install_clicked', { at: 'nav' })}
-                >
-                  Add to Chrome
-                </a>
-              )}
-            </div>
-          </nav>
-        </header>
-
-        <main>
-          <div class="mx-auto w-full max-w-page px-6 sm:px-10">
-            {/* The hero owns the fold: nav plus this section is exactly one screen. */}
-            <section class="relative flex min-h-[calc(100svh-3.5rem)] flex-col items-center justify-center pt-16 pb-20 text-center sm:pt-10 sm:pb-40">
-              {/* The demo cursors belong to the fold and scroll away with it. */}
-              <FakeCursors />
-
-              {/* Two explicit lines, no `text-balance`: only line two holds the
-                  cycling word, so the block's height never changes as it swaps. */}
-              <h1 class="lp-display lp-fade-up text-hero text-ml-fg" style={{ animationDelay: '0.05s' }}>
-                <span class="block">{copy.headlinePrefix}</span>
-                <span class="block">
-                  {copy.headlineJoiner} <ChannelCycle /> {copy.headlineSuffix}
-                </span>
-              </h1>
-
-              <p
-                class="lp-fade-up mt-6 max-w-[48ch] text-intro text-ml-fg/60 text-balance"
-                style={{ animationDelay: '0.1s' }}
-              >
-                Send one link. Your client comments on the live page. Nothing to install, no account.
-              </p>
-
-              {/* Pasting a URL delivers the product in one step; the install
-                      is the higher-friction ask, so it sits in the nav. */}
-              <HeroSource />
-
-              {/* Verifiable claims only: the licence link goes to the repo. */}
-              <p
-                class="lp-fade-up mt-9 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5 text-ui text-ml-fg/60"
-                style={{ animationDelay: '0.25s' }}
-              >
-                {/* Below `lg` the nav has no room for its install button, so the fold keeps one. */}
-                {/* A phone browser can't install an extension, so it isn't offered one. */}
-                {!isMobileDevice && (
-                  <>
-                    <a
-                      href={CHROME_STORE_URL}
-                      target="_blank"
-                      rel="noopener"
-                      class="inline-flex items-center gap-1.5 text-ml-fg/60 no-underline transition-colors hover:text-ml-fg lg:hidden"
-                      onClick={() => capture('extension_install_clicked', { at: 'hero' })}
-                    >
-                      <ChromeIcon />
-                      Add to Chrome
-                    </a>
-                    <span aria-hidden="true" class="lg:hidden">
-                      ·
-                    </span>
-                  </>
-                )}
-                <span>No account needed</span>
-                <span aria-hidden="true">·</span>
-                <a
-                  href="https://github.com/thevrus/MarkLayer"
-                  target="_blank"
-                  rel="noopener"
-                  class="text-ml-fg/60 hover:text-ml-fg transition-colors underline underline-offset-2 decoration-ml-fg/30"
-                >
-                  Apache-2.0
-                </a>
-                <span aria-hidden="true">·</span>
-                <span>Self-hostable</span>
-              </p>
-
-              {/* Without this line, strangers' cursors over the copy read as a
-                  rendering fault. Sits above the docked toolbar, on its centre line. */}
-              <div
-                class="lp-fade-up pointer-events-none absolute inset-x-0 bottom-6 hidden justify-center px-6 sm:flex sm:bottom-27"
-                style={{ animationDelay: '0.3s' }}
-              >
-                <p class="m-0 text-ui text-ml-fg/60">
-                  This page is a live board. <span class="text-ml-fg">Pick a tool below and draw.</span>
-                </p>
-              </div>
-            </section>
-
-            {/* The problem first, in the reader's own terms: the gate a client
-                meets, and where the feedback ends up instead. */}
-            <section class={SECTION_CLS}>
-              <MarginNote class="top-[22%] left-[2%]">Been here?</MarginNote>
-              <SectionHead title="Clients won’t install anything to say a button is wrong.">
-                So it arrives by email, and nobody knows which button.
-              </SectionHead>
-              <div class={CARDS_CLS}>
-                <ProblemRow />
-              </div>
-            </section>
-
-            {/* The proof: the real viewer on a shared room, which scroll grows to
-                the whole screen, then the claims each proved by a piece of the product. */}
-            <section class={SECTION_CLS}>
-              <MarginNote class="top-[22%] right-[2%]" flip>
-                The whole fix
-              </MarginNote>
-              <SectionHead title="One link is the whole setup.">
-                They open it and comment on the page. Nothing to install on either end.
-              </SectionHead>
-              <div class={CARDS_CLS}>
-                <DemoStage />
-              </div>
-              <div class="mt-16 sm:mt-20">
-                <ProofGrid />
-              </div>
-            </section>
-
-            {/* The agent handoff. The command is the install, not a room: pointing a visitor's
-                agent at the public demo board would feed it strangers' comments. */}
-            <section class={cn(SECTION_CLS, 'text-center')}>
-              <SectionHead title="Let your AI coding tool make the fixes.">
-                Give Claude Code or Cursor the link. It reads each comment, fixes the code and ticks it off.
-              </SectionHead>
-              <div class="mt-12">
-                <McpCommand />
-              </div>
-              <p class="mt-5 text-ui text-ml-fg/60">
-                No install needed: add <code class="font-mono">/mcp</code> to any share link.
-              </p>
-              <div class="mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-ui text-ml-fg/60">
-                <span id="lp-agents" class="text-ml-fg">
-                  Works with
-                </span>
-                <ul
-                  aria-labelledby="lp-agents"
-                  class="m-0 flex list-none flex-wrap items-center justify-center gap-x-6 gap-y-3 p-0"
-                >
-                  {AGENT_IDS.map((id) => (
-                    <li key={id} class="m-0 inline-flex items-center gap-1.5 p-0">
-                      <AgentMark id={id} size={15} />
-                      {agentLabel(id)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div class={cn(CARDS_CLS, 'text-left')}>
-                <AgentRow moments={AGENT_MOMENTS} />
-              </div>
-            </section>
-
-            <section class={SECTION_CLS}>
-              <SectionHead title="Everything else a review needs.">
-                All free. Full list on the{' '}
-                <a href="/features" class="text-ml-fg underline underline-offset-2 decoration-ml-fg/30">
-                  features page
-                </a>
-                .
-              </SectionHead>
-              <div class={cn(CARDS_CLS, 'grid gap-4 md:grid-cols-2 xl:grid-cols-4 sm:gap-5')}>
-                {FEATURES.map((f) => (
-                  <FeatureCard key={f.title} {...f} />
-                ))}
-              </div>
-            </section>
-
-            <section class={SECTION_CLS}>
-              <SectionHead
-                title={
-                  <>
-                    Free alternative <span class="text-ml-fg/50">to {COMPARISON_NAMES}.</span>
-                  </>
-                }
-              />
-              {/* The pricing claims live in home-copy.json, shared with HomeContent.astro. */}
-              <div class="mx-auto mt-12 grid max-w-[960px] gap-x-14 gap-y-5 md:grid-cols-2">
-                <p class={cn(BODY_CLS, 'text-pretty')}>{copy.pricingFacts}</p>
-                <p class={cn(BODY_CLS, 'text-pretty')}>
-                  MarkLayer is free by licence (Apache-2.0), not by a pricing policy that can change. Self-host it if
-                  you want.{' '}
-                  <a
-                    href="/guides/free-website-annotation-tools"
-                    class="text-ml-fg underline underline-offset-2 decoration-ml-fg/30"
-                  >
-                    See the full audit
-                  </a>
-                  , checked against live pricing pages.
-                </p>
-              </div>
-              <p class="mx-auto mt-10 max-w-[62ch] text-center text-ui leading-prose text-balance text-ml-fg/60">
-                More:{' '}
-                <a href="/compare" class="text-ml-fg/60 underline hover:text-ml-fg/80">
-                  all comparisons
-                </a>
-                {' · '}
-                <a href="/alternatives" class="text-ml-fg/60 underline hover:text-ml-fg/80">
-                  alternatives by tool
-                </a>
-                {' · '}
-                <a href="/alternatives/markup-io" class="text-ml-fg/60 underline hover:text-ml-fg/80">
-                  Markup.io alternatives by price
-                </a>
-                {' · '}
-                <a href="/for/staging-feedback-no-extension" class="text-ml-fg/60 underline hover:text-ml-fg/80">
-                  staging feedback without an extension
-                </a>
-              </p>
-
-              {/* One row of head-to-heads, each its own link card. */}
-              <nav aria-label="Comparisons" class={cn(CARDS_CLS, 'grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-5')}>
-                {COMPARISONS.map(({ name, href }) => (
-                  <a
-                    key={href}
-                    href={href}
-                    class="lp-card relative flex flex-col gap-1 px-6 py-7 no-underline sm:px-8 sm:py-8"
-                  >
-                    <span class="text-ui text-ml-fg/60">MarkLayer vs</span>
-                    <span class="lp-display text-title text-ml-fg">{name}</span>
-                    <ArrowUpRight
-                      size={16}
-                      class="lp-compare-arrow absolute top-7.5 right-6 text-ml-fg/50 sm:top-8.5 sm:right-8"
-                      aria-hidden="true"
-                    />
-                  </a>
-                ))}
-              </nav>
-            </section>
-
-            <section class={SECTION_CLS}>
-              <SectionHead title="Common questions." />
-              <Card class="lp-faq mx-auto mt-12 max-w-[760px] px-6 py-2 sm:px-10 sm:py-4">
-                <div class="divide-y divide-ml-rule">
-                  {FAQ.map((item) => (
-                    <details key={item.q}>
-                      <summary class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-6 py-5 text-lede text-ml-fg">
-                        {item.q}
-                        <Plus class="lp-faq-mark shrink-0 text-ml-fg/60" size={14} strokeWidth={1.5} />
-                      </summary>
-                      <p class={cn(BODY_CLS, 'max-w-[62ch] pb-6 text-pretty')}>{item.a}</p>
-                    </details>
-                  ))}
-                </div>
-              </Card>
-            </section>
-
-            {/* The close, and the only full-size install button on the page. It
-                takes the hero's step, so the page ends at the size it opened at. */}
-            <section class="pt-28 pb-16 text-center sm:pt-36 sm:pb-20">
-              <h2 class="lp-display mx-auto mb-12 max-w-[16em] text-hero text-balance text-ml-fg">
-                Get feedback on the page, not in your inbox.
-              </h2>
-              <ChromeStoreLink label="Add to Chrome" at="closing" />
-              <p class="mt-4 text-ui text-ml-fg/60">Free &middot; No sign-up</p>
-            </section>
+            ))}
+            <a
+              href="#start"
+              class="rounded-lg bg-ml-btn px-[18px] py-[11px] font-semibold text-ml-btn-fg no-underline transition-colors hover:bg-ml-btn-hover"
+            >
+              Start a redline
+            </a>
           </div>
+        </nav>
+      </header>
 
-          {/* The same footer the marketing pages close with (SiteFooter.astro),
-              read from `@site/lib/footer`, on the page's own floor. */}
-          <footer class="@container relative overflow-hidden pt-16 pb-7">
-            <div class="mx-auto w-full max-w-page px-6 sm:px-10">
-              {/* A grid, not `flex-wrap`: wrapping drops the fourth column onto
-                  its own row as soon as the links grow, leaving three columns
-                  and an orphan off the shared baseline. */}
-              <div class="grid grid-cols-2 gap-x-8 gap-y-9 text-ui sm:grid-cols-4">
-                {FOOTER_COLUMNS.map((col) => (
-                  <div key={col.heading}>
-                    <p class="m-0 mb-3 text-ui font-semibold tracking-label text-ml-fg">{col.heading}</p>
-                    <ul class="m-0 list-none space-y-0.5 p-0">
-                      {col.links.map((l) => (
-                        <li key={l.href} class="m-0 p-0">
-                          <a
-                            href={l.href}
-                            target={l.external ? '_blank' : undefined}
-                            rel={l.external ? 'noopener noreferrer' : undefined}
-                            class="inline-flex min-h-9 items-center text-ml-fg/70 no-underline transition-colors duration-150 pointer-coarse:min-h-11 hover:text-ml-fg"
-                          >
-                            {l.label}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+      <main class="mx-auto w-full max-w-[1280px] px-4 sm:px-10">
+        <section class="grid items-center gap-12 py-12 sm:py-16 lg:grid-cols-[1.15fr_1fr]">
+          <div class="flex flex-col gap-[22px]">
+            <p class="m-0 flex items-center gap-2 text-ui font-bold uppercase tracking-eyebrow text-ml-brand">
+              <span class="size-2 bg-ml-mark" aria-hidden="true" />
+              Website review, the easy way
+            </p>
+            <h1 class="m-0 font-display text-display font-extrabold uppercase text-ml-brand">
+              Mark it in <span class="text-ml-mark">red.</span>
+              <br />
+              We’ll knock it out.
+            </h1>
+            <p class="m-0 max-w-[440px] text-sub text-ml-slate">
+              Circle a photo, point at a button, flag a typo, or tell us something just feels off. Every mark lands on
+              our list, and you watch each one get checked off.
+            </p>
+            <StartForm />
+            <p class="m-0 flex flex-wrap gap-x-5 gap-y-1 text-ui-lg text-ml-muted">
+              <span>No account</span>
+              <span>Nothing to install</span>
+              <span>Free for every client</span>
+            </p>
+          </div>
+          <div class="rounded-[14px] bg-white p-4 shadow-[0_2px_10px_rgb(14_58_117/0.08)] sm:p-6">
+            <DemoBoard />
+          </div>
+        </section>
+
+        <Section id="how" label="How it works" title="One link. Your marks. Our list.">
+          <ol class="m-0 grid list-none gap-4 p-0 md:grid-cols-3">
+            {STEPS.map((s, i) => (
+              <li key={s.title} class={CARD_CLS}>
+                <span class="grid size-7 place-items-center rounded-sm bg-ml-mark text-ui-lg font-bold text-white">
+                  {i + 1}
+                </span>
+                <h3 class="mt-4 mb-0 text-lede font-bold text-ml-fg">{s.title}</h3>
+                <p class="mt-2 mb-0 text-body leading-prose text-ml-slate">{s.body}</p>
+              </li>
+            ))}
+          </ol>
+        </Section>
+
+        <Section id="clients" label="For clients" title="Say it however it makes sense to you.">
+          <p class="m-0 mb-8 max-w-[56ch] text-sub text-ml-slate">
+            I’ll send you the redline. Mark up anything you want changed. It doesn’t have to be words: if something just
+            looks off, circle it and we’ll take it from there.
+          </p>
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {MARKS.map((m) => (
+              <div key={m.title} class={CARD_CLS}>
+                <h3 class="m-0 text-lede font-bold text-ml-fg">{m.title}</h3>
+                <p class="mt-2 mb-0 text-body leading-prose text-ml-slate">{m.body}</p>
               </div>
+            ))}
+          </div>
+        </Section>
+      </main>
 
-              {/* The assistant marks, laid out as a fifth column turned on its
-                  side — the label takes the same quiet step as the four
-                  headings above, so it reads as part of the footer rather than
-                  a widget bolted under it. `-mx-2` cancels the first and last
-                  marks' hit-area padding, so the row's optical gaps match the
-                  gap utility instead of running 8px wide at each end. */}
-              <div class="mt-10 flex flex-wrap items-center gap-x-4 gap-y-1">
-                <p class="m-0 text-ui text-ml-fg/65">{ASK_AI_LABEL}</p>
-                <ul class="-mx-2 m-0 flex list-none flex-wrap items-center p-0">
-                  {ASK_AI.map((a) => (
-                    <li key={a.label} class="m-0 p-0">
+      <footer class="border-t border-ml-rule bg-white">
+        <div class="mx-auto w-full max-w-[1280px] px-4 py-12 sm:px-10">
+          <div class="grid gap-10 sm:grid-cols-[1.3fr_repeat(3,1fr)]">
+            <div class="flex flex-col gap-3">
+              <Wordmark size={26} />
+              <p class="m-0 text-ui text-ml-muted">by Simple Local Web</p>
+            </div>
+            {FOOTER_COLUMNS.map((col) => (
+              <div key={col.heading}>
+                <p class="m-0 mb-3 text-ui font-bold uppercase tracking-eyebrow text-ml-muted">{col.heading}</p>
+                <ul class="m-0 list-none space-y-1 p-0">
+                  {col.links.map((l) => (
+                    <li key={l.href} class="m-0 p-0">
                       <a
-                        href={a.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={`Ask ${a.label} about MarkLayer`}
-                        class="inline-flex items-center justify-center rounded-md p-2 text-ml-fg/60 no-underline transition-colors duration-150 pointer-coarse:size-11 pointer-coarse:p-0 hover:text-ml-fg"
+                        href={l.href}
+                        target={l.external ? '_blank' : undefined}
+                        rel={l.external ? 'noopener noreferrer' : undefined}
+                        class="inline-flex min-h-9 items-center text-body text-ml-slate no-underline transition-colors hover:text-ml-brand"
                       >
-                        {/* An sr-only label rather than `aria-label`, the same
-                            way every other bare mark on the site is named: it
-                            survives translation and a stripped attribute, and
-                            it is what the header's GitHub mark already does. */}
-                        <span class="sr-only">Ask {a.label} about MarkLayer</span>
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          fill-rule="evenodd"
-                          aria-hidden="true"
-                        >
-                          <path d={a.path} />
-                        </svg>
+                        {l.label}
                       </a>
                     </li>
                   ))}
                 </ul>
               </div>
-
-              {/* The two closing lines are one tier of fine print: a step
-                  smaller and quieter than the link columns, so the legal
-                  boilerplate is not the heaviest text on the floor. */}
-              <p class="mt-10 mb-0 text-fine text-ml-fg/65">{TRADEMARK_NOTICE}</p>
-              {/* The closing row: the colophon on the page's spine, where the
-                  lockup belongs, and the status line anchored to the opposite
-                  end. Two items on one line rather than a third stacked grey
-                  line. `items-center`, not `items-baseline`: the colophon is
-                  itself a flex row led by the mark, so its first baseline is
-                  the mark's bottom edge rather than the text's, and baseline
-                  alignment dropped the status 5px below the line it sits on.
-
-                  The reference for this row put the status on the left; it is
-                  on the right here because the left edge of the floor is the
-                  brand's edge. Mirrored in SiteFooter.astro. */}
-              <div class="mt-5 flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
-                <p class="m-0 flex items-start gap-2 text-fine text-ml-fg/65">
-                  {/* Aligned to the FIRST line, not to the block: the line
-                      wraps on a phone, and a centred mark then floats between
-                      the two rows. */}
-                  <Logo size={14} class="mt-[3px] shrink-0" />
-                  <span>
-                    &copy; {new Date().getFullYear()} MarkLayer &middot; {COLOPHON}
-                  </span>
-                </p>
-                {/* Starts at `ok`, which is what the page attests — it came
-                    from the Worker that answers `/api/health` — and downgrades
-                    only on a probe that measured D1 or R2 not answering. When it
-                    does, the green and the breath both go: grey and still
-                    against green and breathing is the whole signal, so it needs
-                    no second colour. */}
-                <p class="ml-live" data-ml-status={systemStatus.value} role="status">
-                  {/* The pulse rides the mark only — see `mlLivePulse` in
-                      style.css for why it breathes rather than ringing, and why
-                      the dot is fully rendered if the animation never runs. */}
-                  <span class="ml-live-dot" aria-hidden="true" />
-                  {STATUS_LABEL[systemStatus.value]}
-                </p>
-              </div>
-            </div>
-
-            {/* The signature wordmark: full-bleed, cut at roughly half the cap
-                height, dissolving into the page.
-
-                It sits outside the page's capped container on purpose — this is
-                the one element that is meant to touch both edges, so it takes
-                no gutter and no max-width. Sized so the word spans the viewport
-                exactly at any width (see .lp-wordmark), clipped to a fraction of
-                its own cap height, and faded out with a long multi-stop mask so
-                the cut is never a visible line. Nothing sits beneath it.
-
-                It is lifted a little clear of the page's bottom edge rather
-                than welded to it, which is a deliberate departure from the
-                usual rule for this move — flush with no gap beneath — because
-                the product's own toolbar floats at the bottom of the viewport
-                and swallowed the band entirely when it sat right on the edge.
-
-                `aria-hidden` because the accessible wordmark is the one in the
-                nav; this is texture, not a second heading. */}
-            <div class="lp-wordmark-clip mt-12 select-none" aria-hidden="true">
-              <span class="lp-wordmark">MarkLayer</span>
-            </div>
-          </footer>
-        </main>
-
-        {/* Comment overlay.
-
-            Absolute, spanning the document, with `scrollY` held at 0 — the same
-            way the canvas below positions its ops. These layers used to be
-            `fixed` and were handed `window.scrollY` read once during render;
-            nothing re-renders them on scroll, so the subtraction went stale the
-            moment the page moved and every pin sat frozen at a viewport offset,
-            drifting across the sections below it. Document coordinates on a
-            document-height layer need no scroll arithmetic at all, so there is
-            nothing left to go stale. */}
-        <div
-          class="absolute inset-0 z-2147483646 overflow-hidden"
-          style={{
-            pointerEvents: showCommentCursor ? 'auto' : 'none',
-            cursor: showCommentCursor ? 'crosshair' : 'default',
-          }}
-          onClick={(e) => {
-            if (tool !== 'comment') return;
-            commentPopover.value = { x: e.clientX, y: e.clientY + (window.scrollY || 0) };
-          }}
-        >
-          {comments.map((c) => (
-            <WebCommentPin key={c.id} op={c} scale={1} scrollY={0} />
-          ))}
-          {commentPopover.value && (
-            <CommentPopover
-              at={{ x: commentPopover.value.x, y: commentPopover.value.y }}
-              anchorAt={{ x: commentPopover.value.x, y: commentPopover.value.y }}
-              capture={() => ({ captureViewport: frameViewport(null) })}
-              push={pushDeviceOp}
-              onClose={() => {
-                commentPopover.value = null;
-              }}
-            />
-          )}
+            ))}
+          </div>
+          <p class="mt-10 mb-0 text-fine text-ml-muted">
+            &copy; {new Date().getFullYear()} Simple Local Web &middot; {COLOPHON}
+          </p>
         </div>
+      </footer>
 
-        {/* Selection highlights. A hovered or held card steps up to the comment
-            layer's z and wins on DOM order, or the pins and canvas cover it. */}
-        <div
-          class="absolute inset-0 z-2147483645 pointer-events-none overflow-hidden
-                 has-[[data-marker]:hover]:z-2147483646 has-[[data-held]]:z-2147483646"
-        >
-          {selections.value.map((op) => (
-            <WebSelectionHighlight key={op.id} op={op} scale={1} scrollY={0} />
-          ))}
-        </div>
-        {selectionPopover.value && (
-          <WebSelectionPopover
-            {...selectionPopover.value}
-            onClose={() => {
-              selectionPopover.value = null;
-            }}
-          />
-        )}
-
-        {/* Text tool overlay */}
-        <div
-          class="absolute inset-0 z-2147483646"
-          style={{ pointerEvents: showTextCursor ? 'auto' : 'none', cursor: showTextCursor ? 'text' : 'default' }}
-          onClick={(e) => {
-            if (tool !== 'text') return;
-            textInput.value = { x: e.clientX, y: e.clientY + (window.scrollY || 0) };
-          }}
-        />
-        {textInput.value && (
-          <TextInputOverlay
-            x={textInput.value.x}
-            y={textInput.value.y}
-            scale={1}
-            scrollY={0}
-            onCommit={(text) => {
-              if (text && textInput.value) {
-                const op: TextOp = {
-                  id: nanoid(),
-                  tool: 'text',
-                  text,
-                  x: textInput.value.x,
-                  y: textInput.value.y,
-                  fontSize: Math.max(14, lineWidth.value * 6),
-                  color: color.value,
-                  lineWidth: lineWidth.value,
-                  captureViewport: { width: window.innerWidth, height: window.innerHeight },
-                };
-                pushDeviceOp(op);
-              }
-              textInput.value = null;
-            }}
-          />
-        )}
-
-        <canvas
-          ref={canvasRef}
-          onMouseDown={onDown}
-          class="absolute inset-x-0 top-0 z-2147483645"
-          style={{
-            height: '100%',
-            pointerEvents: showCanvas ? 'auto' : 'none',
-            cursor: showCanvas ? 'crosshair' : 'default',
-          }}
-        />
-
-        <InspectorLayer />
-
-        {/* Steps aside while the demo window fills the screen: its own toolbar
-            is the one to use there, and two identical bars stacked at the
-            bottom edge read as a rendering fault. */}
-        <div class="lp-toolbar-in hidden sm:block z-2147483647" data-away={embedInView.value ? 'true' : undefined}>
-          <Toolbar />
-        </div>
-
-        <Toasts offset="below-bar" />
-      </div>
-    </>
+      <Toasts />
+    </div>
   );
 }

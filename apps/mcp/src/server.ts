@@ -30,11 +30,11 @@ interface ServerOptions {
 
 export async function startServer(opts: ServerOptions): Promise<void> {
   const server = new Server(
-    { name: 'marklayer-mcp', version },
+    { name: 'marklayer-mcp', title: 'Redline', version },
     {
       capabilities: { tools: {} },
       instructions:
-        'Bridge between MarkLayer annotations on a webpage and an AI coding agent. ' +
+        'Bridge between Redline annotations on a webpage and an AI coding agent. ' +
         'Call marklayer_connect_room first if no MARKLAYER_ROOM was provided at startup. ' +
         'Each annotation carries a `kind` (comment | area | selection | inspect) and, where available, ' +
         'a `target` block with the element selector + markdown — that is your handle for code changes; ' +

@@ -82,7 +82,7 @@ import {
   textInput,
   viewerZoom,
 } from './signals';
-import { noteSupportSignal } from './support';
+import { noteSupportSignal, SUPPORT_ENABLED } from './support';
 import { maybeOfferSupport, openSupportCard, watchAgentWork, watchNotes, watchSupportPaid } from './support-ui';
 import { useCheckFix } from './useCheckFix';
 import { connected, emitRipple, localPeerId, serverUrl, serverWidth, useRealtimeSync } from './useRealtimeSync';
@@ -110,7 +110,7 @@ function AuthoringChrome() {
   // opener from the same component that renders the card is what keeps that row
   // honest: it exists exactly as long as there is something for it to open.
   useEffect(() => {
-    onSupport.value = () => openSupportCard('menu');
+    if (SUPPORT_ENABLED) onSupport.value = () => openSupportCard('menu');
     // The thank-you is watched for on the same lifecycle, and for the same
     // reason: only somebody who could be asked can have paid, so a read-only
     // guest neither sees the card nor hears back about one.

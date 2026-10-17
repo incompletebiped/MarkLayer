@@ -34,7 +34,7 @@ p.alert{color:var(--fg);font-weight:500}
 `;
 
 export function page({ title, body }: { title: string; body: string }): string {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${STYLE}</style></head><body><main><p class="mark">MarkLayer</p>${body}</main></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>${STYLE}</style></head><body><main><p class="mark">Redline</p>${body}</main></body></html>`;
 }
 
 /**
@@ -44,16 +44,16 @@ export function page({ title, body }: { title: string; body: string }): string {
  * Scanners follow links; they do not press buttons.
  */
 export function confirmPage(token: string): Response {
-  const body = `<h1>Sign in to MarkLayer</h1>
+  const body = `<h1>Sign in to Redline</h1>
 <p>Press continue to finish signing in on this device.</p>
 <form method="post" action="/auth/verify"><input type="hidden" name="token" value="${token}"><button type="submit" autofocus>Continue</button></form>
 <small>If you did not ask to sign in, close this page and nothing will happen.</small>`;
-  return new Response(page({ title: 'Sign in · MarkLayer', body }), { status: 200, headers: HTML_HEADERS });
+  return new Response(page({ title: 'Sign in · Redline', body }), { status: 200, headers: HTML_HEADERS });
 }
 
 export function expiredPage(): Response {
   const body = `<h1>This link has expired</h1>
 <p>Sign-in links work once and last 15 minutes. Ask for a new one and use the newest email.</p>
 <a class="btn" href="/app">Get a new link</a>`;
-  return new Response(page({ title: 'Link expired · MarkLayer', body }), { status: 400, headers: HTML_HEADERS });
+  return new Response(page({ title: 'Link expired · Redline', body }), { status: 400, headers: HTML_HEADERS });
 }

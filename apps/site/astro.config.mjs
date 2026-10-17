@@ -1,54 +1,20 @@
 // @ts-check
 
-import { unified } from '@astrojs/markdown-remark';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
-import rehypeExternalLinks from 'rehype-external-links';
-import { rehypeCodeBlocks } from './src/lib/rehype-code-blocks.mjs';
-import { rehypeScrollTables } from './src/lib/rehype-scroll-tables.mjs';
 import { ORIGIN, WORKER_DEV } from './src/lib/site';
 
 export default defineConfig({
   site: ORIGIN,
   output: 'static',
 
-  // The Worker serves these pages today at extensionless, trailing-slash-free
-  // URLs (`/vs/markup-io`). `format: 'file'` emits `vs/markup-io.html`, which
-  // Workers' default `auto-trailing-slash` handling serves at exactly that URL.
-  // The default `format: 'directory'` would emit `vs/markup-io/index.html` and
-  // move every page to `/vs/markup-io/` — 30 redirects and a needless
-  // reshuffle of established rankings.
+  // Extensionless, trailing-slash-free URLs (`/privacy`): `format: 'file'` emits
+  // `privacy.html`, which Workers' `auto-trailing-slash` handling serves at exactly that URL.
   build: { format: 'file' },
   trailingSlash: 'never',
 
-  // No integrations: every page here is static HTML, and the few scripts on it
-  // (search, copy, the outline's scroll-spy) only enhance markup that already
-  // works without them. `/` is the app shell — the SPA bundle is built by apps/worker, not here.
-
-  markdown: {
-    // Mirrors linkifyFirst() in the old renderer, which opened competitor links
-    // in a new tab with noopener/noreferrer.
-    //
-    // Astro 7 defaults to the Rust Sätteri processor, whose `hastPlugins` hook
-    // does not accept unified/rehype plugins (verified: the attributes were
-    // silently dropped). The content here is 30 short intro paragraphs, so the
-    // unified pipeline's extra ~100ms is not worth hand-rolling a Sätteri
-    // equivalent.
-    // The old renderer emitted the author's straight quotes verbatim, and the
-    // .astro templates still do. Leaving smart punctuation on would curl quotes
-    // in Markdown bodies only, so the same page would mix ' and ’.
-    processor: unified({
-      smartypants: false,
-      rehypePlugins: [
-        [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }],
-        rehypeScrollTables,
-        rehypeCodeBlocks,
-      ],
-    }),
-    // Token colours come from `--astro-code-*` in global.css, on the site's own
-    // ink ladder. The default github-dark dropped a black slab into a white page.
-    shikiConfig: { theme: 'css-variables' },
-  },
+  // No integrations: every page here is static HTML. `/` is the app shell — the
+  // SPA bundle is built by apps/worker, not here.
 
   vite: {
     plugins: [tailwindcss()],

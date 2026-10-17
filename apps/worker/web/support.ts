@@ -24,7 +24,12 @@ import { type CommentStatus, type DrawOp, isAnnotationOp, isSettled, resolveOpSt
  * button that goes nowhere, which is also what should happen if the product is
  * ever retired.
  */
-export const POLAR_CHECKOUT_URL = 'https://buy.polar.sh/polar_cl_DBsDl9Ufd2O0mOEodJrcrIDpuOu2iEc0UqG4w4cXdk2';
+// Empty in Redline: the upstream checkout pays MarkLayer's author, and this deployment
+// asks nobody for money. Empty also turns off every entry point (`SUPPORT_ENABLED`).
+export const POLAR_CHECKOUT_URL = '';
+
+/** Whether there is a card to open at all. Every button, row and auto-offer checks this. */
+export const SUPPORT_ENABLED = POLAR_CHECKOUT_URL.length > 0;
 
 /**
  * What the project actually costs to run each month, or `null` while unknown.

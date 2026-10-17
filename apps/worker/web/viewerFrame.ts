@@ -15,11 +15,11 @@ export type RenderFailure = 'timeout' | 'no-marker' | 'iframe-error' | 'firewall
 export const FAILURE_COPY = {
   firewall: {
     title: "This site's firewall blocked us",
-    body: 'The host answered our request with a security challenge instead of the page, so there was nothing to show. The annotations are saved — open them with the MarkLayer extension on the live site, which loads the page in your own browser.',
+    body: 'The host answered our request with a security challenge instead of the page, so there was nothing to show. The annotations are saved. Tell Simple Local Web and we’ll get the page loading again.',
   },
   hostile: {
     title: 'This site blocks embedding',
-    body: 'Sites like YouTube, TikTok, Instagram, and X refuse to load inside other pages. The annotations are saved — install the MarkLayer extension to view them on the live site.',
+    body: 'Sites like YouTube, TikTok, Instagram, and X refuse to load inside other pages. The annotations are saved, but this page can’t be shown here. Try a different page on the site.',
   },
   'upstream-error': {
     // Distinct from `firewall` on purpose: telling someone a firewall blocked us
@@ -43,7 +43,7 @@ export const FIREWALL_ADVICE = {
       "Own this site? It's SiteGround's Anti-Bot AI, which runs on their servers. You can't switch it off in Site Tools or your security plugin, and it doesn't show up in your logs. SiteGround support can whitelist",
     after: 'for you.',
     request: ({ ip, host }: { ip: string; host: string }) =>
-      `Hi, please whitelist the IP address ${ip} from the Anti-Bot AI (sgcaptcha) challenge for ${host}. It belongs to MarkLayer, a review tool that loads my pages so my team can annotate them.`,
+      `Hi, please whitelist the IP address ${ip} from the Anti-Bot AI (sgcaptcha) challenge for ${host}. It belongs to Redline, a review tool that loads my pages so my team can annotate them.`,
   },
 } as const satisfies Record<Firewall, unknown>;
 

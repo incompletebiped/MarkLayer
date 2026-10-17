@@ -37,14 +37,14 @@ describe('mailerFor', () => {
         return { messageId: 'x' };
       },
     };
-    await mailerFor({ EMAIL: capture, MAIL_FROM: 'login@marklayer.app' }).send({
+    await mailerFor({ EMAIL: capture, MAIL_FROM: 'login@simplelocalweb.com' }).send({
       to: 'someone@example.com',
       subject: 'Sign in',
       text: 'plain',
       html: '<p>rich</p>',
     });
     expect(sent[0]).toEqual({
-      from: { email: 'login@marklayer.app', name: 'MarkLayer' },
+      from: { email: 'login@simplelocalweb.com', name: 'Redline' },
       to: 'someone@example.com',
       subject: 'Sign in',
       text: 'plain',
@@ -72,10 +72,10 @@ describe('signInTemplate', () => {
   const rendered = signInTemplate.render({ link: 'https://marklayer.app/auth/verify?token=abc' });
 
   test('applies the app brand token rather than a stock default', () => {
-    // --color-ml-fg is #1a1a1a in apps/worker/web/style.css. If the build's
-    // token parsing silently stops working, the link reverts to React Email's
-    // default blue and nothing else fails — so assert the colour directly.
-    expect(rendered.html).toContain('color:rgb(26,26,26)');
+    // --color-ml-fg is ink #14213d and --color-ml-btn navy #0e3a75 in apps/worker/web/style.css. If the
+    // build's token parsing silently stops working, both revert to stock defaults and nothing else fails.
+    expect(rendered.html).toContain('color:rgb(20,33,61)');
+    expect(rendered.html).toContain('background-color:rgb(14,58,117)');
   });
 
   test('carries the link in both the anchor and as bare text', () => {

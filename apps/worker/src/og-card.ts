@@ -1,9 +1,9 @@
-import { CARD, escapeXml, MARK_AXIS, mark, SEPARATOR, SIGNATURE_MARK, TEXT_AXIS, TONE, TRACKING } from './og-svg';
+import { CARD, escapeXml, MARK_AXIS, mark, SEPARATOR, signature, TEXT_AXIS, TONE, TRACKING } from './og-svg';
 import { collectTally, EMPTY_TALLY_LABEL, type OpTally, plural, tallyParts } from './og-tally';
 
 /**
- * The mark at signature scale, running off the right edge and whole on every
- * other, in a tone barely above the ground.
+ * The check at watermark scale, running off the right edge, in a tone barely
+ * above the ground.
  *
  * This is the whole of the card's artwork. It used to be a fallback behind a
  * panel that drew the person's own annotations, which was removed: an OG image
@@ -12,7 +12,7 @@ import { collectTally, EMPTY_TALLY_LABEL, type OpTally, plural, tallyParts } fro
  * how much, and shows nothing of what was said about it.
  */
 function watermark(): string {
-  return mark({ x: 792, top: 103, height: 424, fill: TONE.ghost });
+  return mark({ x: 816, top: 63, height: 504, check: TONE.ghost });
 }
 
 /** Steps rather than a formula, so a domain never lands between two awkward sizes. */
@@ -85,7 +85,7 @@ export function buildOgSvg({ domain, ops, faviconUri }: OgCardParams): string {
 
   ${watermark()}
 
-  ${mark({ ...SIGNATURE_MARK, fill: TONE.ink })}
+  ${signature()}
 
   ${faviconUri ? `<image x="${MARK_AXIS}" y="${iconY.toFixed(1)}" width="${icon}" height="${icon}" href="${faviconUri}"/>` : ''}
 

@@ -56,6 +56,7 @@ import {
   viewerZoom,
   withScheme,
 } from './signals';
+import { SUPPORT_ENABLED } from './support';
 import { openSupportCard } from './support-ui';
 import { connected } from './useRealtimeSync';
 import { videoActive, voiceActive, voiceMuted } from './voiceSignals';
@@ -109,7 +110,7 @@ function BrandLink() {
       )}
     >
       <Logo size={20} />
-      <span class="text-ui font-semibold tracking-ui text-(--ds-gray-1000)">MarkLayer</span>
+      <span class="text-ui font-semibold tracking-ui text-(--ds-gray-1000)">Redline</span>
     </a>
   );
 }
@@ -479,7 +480,7 @@ function SupportButton() {
   return (
     <BarButton
       icon={<Heart size={16} strokeWidth={1.5} aria-hidden="true" />}
-      tip="Support MarkLayer"
+      tip="Support Redline"
       onClick={() => openSupportCard('bar')}
     />
   );
@@ -535,7 +536,7 @@ export function ViewerTopBar() {
           onClick={() => (showAnnotationPanel.value = !showAnnotationPanel.value)}
         />
         {!isReadonly.value && <SharePopover />}
-        {!isReadonly.value && <SupportButton />}
+        {!isReadonly.value && SUPPORT_ENABLED && <SupportButton />}
         <ThemeButton />
       </div>
     </div>

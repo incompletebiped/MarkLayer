@@ -4,7 +4,7 @@
  */
 export const id = 'invite';
 
-export const subject = 'Someone invited you to an annotation on MarkLayer';
+export const subject = 'Someone invited you to an annotation on Redline';
 
 /** Substituted at send time. Build-time rendering means no data is available yet. */
 export const PLACEHOLDER = { link: '{{link}}' } as const;
@@ -17,5 +17,5 @@ export const text = [
   '',
   "If you weren't expecting this, ignore this email. Nothing will happen.",
   '',
-  'MarkLayer · marklayer.app',
+  'Redline by Simple Local Web · feedback.simplelocalweb.com',
 ].join('\n');

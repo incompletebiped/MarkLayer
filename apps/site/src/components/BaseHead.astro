@@ -36,7 +36,7 @@ const robots = noindex ? 'noindex, follow' : 'max-image-preview:large, max-snipp
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={ogImage} />
-<meta property="og:site_name" content="MarkLayer" />
+<meta property="og:site_name" content="Redline" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={title} />
 <meta name="twitter:description" content={description} />
@@ -44,19 +44,14 @@ const robots = noindex ? 'noindex, follow' : 'max-image-preview:large, max-snipp
 <meta name="robots" content={robots} />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM-readable summary" />
-{/* Both agent surfaces are declared, not just the index. `llms-full.txt` is in
-    the sitemap, so without a link from somewhere it crawls as an orphan. */}
 <link rel="alternate" type="text/plain" href="/llms-full.txt" title="LLM-readable full text" />
 <slot name="extra-links" />
-<!-- The roman latin face is on the critical path for every page. It is
-     same-origin and declared in global.css, so preloading it starts the fetch in
-     the head instead of one round trip later, when the CSS parse would otherwise
-     discover it. The italic and the latin-ext subset are deliberately NOT
-     preloaded — they fetch only when a glyph in their range actually renders.
-     `crossorigin` is required on a font preload even same-origin: fonts are
-     fetched in anonymous mode, and a preload without it lands in a different
-     cache partition and is simply downloaded twice. -->
-<link rel="preload" href="/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap"
+/>
 {
   schema.filter((s): s is object => s !== null).map((s) => (
     <script type="application/ld+json" is:inline set:html={JSON.stringify(s)} />

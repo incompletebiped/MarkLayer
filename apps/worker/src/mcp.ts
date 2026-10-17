@@ -325,7 +325,7 @@ function buildServer({
   createPreview: Parameters<typeof callCreateTool>[0]['createPreview'];
   onToolCall: (call: { tool: string; ok: boolean; duration_ms: number }) => void;
 }): McpServer {
-  const server = new McpServer({ name: 'marklayer', version: '1.0.0' });
+  const server = new McpServer({ name: 'marklayer', title: 'Redline', version: '1.0.0' });
   for (const tool of TOOLS) {
     // connect_room has no meaning here: the room is named in the URL.
     if (tool.name === 'marklayer_connect_room') continue;

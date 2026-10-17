@@ -82,11 +82,11 @@ const openApiJson = once(() =>
     api.getOpenAPI31Document({
       openapi: '3.1.0',
       info: {
-        title: 'MarkLayer Share API',
+        title: 'Redline Share API',
         version: '1.0.0',
         description:
-          'Anonymous, no-auth API for creating and reading MarkLayer annotation share links. Pick an unguessable id (nanoid/uuid) — the id is the access token. Share links open at https://marklayer.app/s/{id} (or /p/{id} for project bundles). A link its owner protected with a password answers 401 to every /{id} route unless the request sends `Authorization: Bearer <password>` (or `X-MarkLayer-Password`); ten wrong guesses in 15 minutes answer 429.',
-        license: { name: 'MIT', url: 'https://github.com/thevrus/MarkLayer/blob/main/LICENSE' },
+          'Anonymous, no-auth API for creating and reading Redline annotation share links. Pick an unguessable id (nanoid/uuid) — the id is the access token. Share links open at https://feedback.simplelocalweb.com/s/{id} (or /p/{id} for project bundles). A link its owner protected with a password answers 401 to every /{id} route unless the request sends `Authorization: Bearer <password>` (or `X-MarkLayer-Password`); ten wrong guesses in 15 minutes answer 429.',
+        license: { name: 'Apache-2.0', url: 'https://www.apache.org/licenses/LICENSE-2.0' },
       },
       servers: [{ url: 'https://feedback.simplelocalweb.com/api' }],
     }),

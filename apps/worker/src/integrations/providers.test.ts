@@ -170,7 +170,7 @@ describe('github', () => {
   test('pins the API version and identifies itself', () => {
     const headers = render(configs.github)?.headers;
     expect(headers?.['X-GitHub-Api-Version']).toBe('2022-11-28');
-    expect(headers?.['User-Agent']).toBe('MarkLayer');
+    expect(headers?.['User-Agent']).toBe('Redline');
   });
 
   test('reads html_url, the one a person can open, not the API url', () => {

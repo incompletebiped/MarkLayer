@@ -334,7 +334,7 @@ if (parseViewParam()) {
 // Show friendly error when redirected from proxy. Use the hash (not a query
 // param) so the error URL is not indexable as a duplicate of `/`.
 if (location.hash === '#error=self') {
-  showToast("You can't annotate MarkLayer itself — try a different URL", { type: 'error', duration: 5000 });
+  showToast("You can't annotate Redline itself — try a different URL", { type: 'error', duration: 5000 });
   history.replaceState(null, '', location.pathname + location.search);
 }
 

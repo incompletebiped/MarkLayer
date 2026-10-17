@@ -4,12 +4,12 @@ import { PLACEHOLDER } from './invite.meta';
 
 export default function Invite() {
   return (
-    <Layout preview="You've been invited to view an annotation on MarkLayer">
+    <Layout preview="You've been invited to view an annotation on Redline">
       <Heading className="text-ml-fg m-0 mb-3 text-[24px] font-semibold tracking-[-0.02em]">
         You've been invited to an annotation
       </Heading>
       <Text className="m-0 mb-6 text-[15px] leading-[24px] text-[#4d4d4d]">
-        Someone shared a page they marked up on MarkLayer with you.
+        Someone shared a page they marked up on Redline with you.
       </Text>
       <Button
         href={PLACEHOLDER.link}

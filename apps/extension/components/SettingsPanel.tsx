@@ -249,7 +249,7 @@ function ShareRow() {
  */
 function SupportRow({ open }: { open: () => void }) {
   const setHint = useHintSetter();
-  const hint = 'MarkLayer is free and has no accounts. See what it costs to run, and chip in if you want to.';
+  const hint = 'Redline is free and has no accounts. See what it costs to run, and chip in if you want to.';
   return (
     <button
       type="button"
@@ -264,7 +264,7 @@ function SupportRow({ open }: { open: () => void }) {
       <span class="text-(--ds-gray-900)">
         <Icon name="heart" size={14} strokeWidth={1.5} />
       </span>
-      Support MarkLayer
+      Support Redline
     </button>
   );
 }
@@ -373,7 +373,7 @@ function JoinRoomRow() {
 function PanelHeader() {
   return (
     <div class="flex items-center justify-between px-4 h-11">
-      <span class="text-ui font-semibold tracking-ui text-(--ds-gray-1000)">MarkLayer</span>
+      <span class="text-ui font-semibold tracking-ui text-(--ds-gray-1000)">Redline</span>
       <span class={cn(geist.meta, 'text-meta tabular-nums')}>v{version}</span>
     </div>
   );

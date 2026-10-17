@@ -1,16 +1,19 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
-import Breadcrumbs from '../components/Breadcrumbs.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import SiteHeader from '../components/SiteHeader.astro';
-import { ORIGIN, pageOgImage, REPO_URL } from '../lib/site';
+import dates from '../data/page-dates.json';
+import { breadcrumbSchema } from '../lib/schema';
+import { COMPANY_NAME, COMPANY_URL, CONTACT_EMAIL, ORIGIN, pageOgImage } from '../lib/site';
 
-// One string: the card is keyed by a hash of the heading, so an h1 edited
-// without its twin would serve the old wording forever.
-const h1 = 'Privacy Policy';
-const title = 'Privacy Policy · MarkLayer';
+// One string: the card is keyed by a hash of the heading.
+const h1 = 'Privacy';
+const title = 'Privacy · Redline by Simple Local Web';
 const description =
-  'MarkLayer collects no personal information. No account, email, or sign-up. Annotations are stored only when you share them, and are deleted automatically.';
+  'What Redline keeps, where it lives and when it is deleted. Hosted on Cloudflare, no analytics, and marks are cleared out 90 days after anyone last opened them.';
+const updated = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(
+  new Date(`${dates.privacy.modified}T00:00:00Z`),
+);
 ---
 
 <html lang="en">
@@ -21,75 +24,64 @@ const description =
       canonical={`${ORIGIN}/privacy`}
       ogType="website"
       ogImage={pageOgImage({ heading: h1, path: '/privacy' })}
+      schema={[breadcrumbSchema([{ name: 'Redline', path: '/' }, { name: 'Privacy' }])]}
     />
   </head>
   <body>
     <SiteHeader path="/privacy" />
-    <div class="ml-shell">
-      <Breadcrumbs crumbs={[{ name: 'MarkLayer', path: '/' }, { name: 'Privacy' }]} />
+    <main class="ml-shell">
       <h1>{h1}</h1>
-      {/* Stated review date of the policy itself. It changes when the policy
-          changes, not when the page is rebuilt. */}
-      <p class="ml-meta mt-0 mb-8">Last updated: March 2026</p>
-
-      <h2>What we collect</h2>
-      <p>MarkLayer does not collect personal information. No account, email, or sign-up is required.</p>
-      <p>
-        When you use the annotation tools, a randomly generated display name and cursor color are stored in your browser's
-        local storage. These are never sent to our servers except as part of real-time collaboration sessions you
-        initiate.
+      <p class="ml-meta mt-0 mb-8">Last updated {updated}</p>
+      <p class="ml-lede">
+        Redline is run by <a href={COMPANY_URL}>{COMPANY_NAME}</a>. This page says, in plain words, what it keeps when you
+        use it and what happens to that.
       </p>
 
-      <h2>Annotation data</h2>
+      <h2>Where it runs</h2>
       <p>
-        Annotations you create (drawings, comments, text) are sent to our server only when you choose to share them.
-        Shared annotations are stored temporarily and automatically deleted after their expiration period.
+        Redline is hosted on Cloudflare. Your marks, comments and the pages they sit on are stored in Cloudflare's
+        database and storage services, and the live connection that shows everyone the same marks runs there too. To
+        show your website inside Redline, our server loads the page for you.
       </p>
 
-      <h2>Page content</h2>
-      <p>
-        The extension does not read, collect, or transmit the content of any webpage you visit. It only renders its own
-        overlay on top of the page.
-      </p>
-
-      <h2>Analytics</h2>
-      <p>
-        The MarkLayer web app uses <a href="https://posthog.com">PostHog</a> to count page views and a small number of
-        aggregate product events, such as how many annotations a session produced and which tools were used. Our
-        marketing pages (comparisons, use cases, pricing) ship no JavaScript at all and are not tracked.
-      </p>
-      <p>We deliberately collect as little as possible, because you point MarkLayer at pages we have no business seeing:</p>
+      <h2>What gets saved</h2>
       <ul>
         <li>
-          Session replay records only MarkLayer's own interface, to help us fix bugs. The page you annotate is blocked
-          from recording and appears as an empty box, and anything you type is masked. No heatmaps, no autocapture of
-          clicks or keystrokes.
+          <strong>Your marks and comments.</strong> Drawings, pins, notes and replies you leave on a page, along with the
+          address of the page you marked up.
         </li>
         <li>
-          No URLs of the pages you annotate, no share-link IDs, and no page content. Diagnostic events record a reason
-          code and a duration, nothing more.
+          <strong>Files you upload.</strong> A PDF or image you add is kept in Cloudflare R2 storage so the people on the
+          link can see it.
         </li>
-        <li>No cookies and no user profiles. Events are counters, so there is no per-person record to build or hand over.</li>
-        <li>IP addresses are discarded rather than stored.</li>
-        <li>The browser extension collects no analytics whatsoever.</li>
+        <li>
+          <strong>A display name.</strong> The name and colour shown beside your marks are kept in your own browser, and
+          sent along only while you are working on a shared page.
+        </li>
+        <li>
+          <strong>Your email, if you sign in.</strong> Signing in is done with a link we email you. No password is stored.
+          We keep your email address so we can show you the pages you own.
+        </li>
       </ul>
+
+      <h2>When it is deleted</h2>
       <p>
-        We honour <a href="https://en.wikipedia.org/wiki/Do_Not_Track">Do Not Track</a>. To opt out regardless, run
-        <code>localStorage.setItem('marklayer:no-analytics', '1')</code> in your browser console, and nothing further will
-        be sent. MarkLayer is open source, so you can verify all of this in
-        <a href={`${REPO_URL}/blob/main/apps/worker/web/analytics.ts`}>analytics.ts</a> and
-        <a href={`${REPO_URL}/blob/main/apps/worker/src/posthog.ts`}>posthog.ts</a>.
+        Marks, comments and uploaded files are deleted automatically 90 days after the page was last opened. Opening or
+        commenting on a page resets that clock. A page can also be set to expire sooner, and it is deleted when it does.
       </p>
 
-      <h2>Third parties</h2>
-      <p>
-        We use PostHog for analytics as described above. We do not sell, share, or transfer any data to other third
-        parties.
-      </p>
+      <h2>What we do not do</h2>
+      <ul>
+        <li>No analytics or tracking scripts run on Redline.</li>
+        <li>No advertising, and we do not sell or share what you leave here.</li>
+      </ul>
 
-      <h2>Contact</h2>
-      <p>Questions? Open an issue on our <a href={REPO_URL}>GitHub repository</a>.</p>
-    </div>
+      <h2>Questions</h2>
+      <p>
+        Want something removed sooner, or have a question about any of this? Email
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+      </p>
+    </main>
     <SiteFooter />
   </body>
 </html>

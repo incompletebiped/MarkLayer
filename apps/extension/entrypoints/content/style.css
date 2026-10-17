@@ -5,9 +5,9 @@
   --color-ml-glass-accent: oklch(0 0 0 / 0.06);
   --color-ml-glass-muted: oklch(0 0 0 / 0.03);
   /* Brand accent — used for primary submit buttons, focus rings, caret. */
-  --color-ml-accent: oklch(0.65 0.15 300);
+  --color-ml-accent: #0e3a75;
   /* Its readable foreground — the count inside an accent-tinted badge. */
-  --color-ml-accent-fg: oklch(0.86 0.08 300);
+  --color-ml-accent-fg: #c9d6ea;
   /* Resolved/muted neutral — used for done-state chips and de-emphasized swatches. */
   --color-ml-resolved: oklch(0.55 0 0);
   /* Spring easing for entrance/exit motion. */
@@ -95,7 +95,7 @@
     --ml-state-green: oklch(0.62 0.17 145);
     --ml-state-red: oklch(0.62 0.22 25);
     --ml-state-yellow: oklch(0.78 0.16 85);
-    --ml-state-accent: oklch(0.65 0.15 300);
+    --ml-state-accent: #0e3a75;
 
     /* Syntax highlighting (monokai-inspired) for inspector code blocks */
     --ml-syntax-bg: oklch(0 0 0 / 0.04);
@@ -144,7 +144,7 @@
       --color-ml-glass-fg: #fff;
       --color-ml-glass-accent: oklch(1 0 0 / 0.12);
       --color-ml-glass-muted: oklch(1 0 0 / 0.06);
-      --color-ml-accent: oklch(0.78 0.13 300);
+      --color-ml-accent: #7fa3d9;
       --color-ml-resolved: oklch(0.65 0 0);
       --ml-glass-bg: oklch(0.14 0.012 280 / 0.92);
       --ml-glass-bg-small: oklch(0.13 0.012 280 / 0.94);
@@ -179,7 +179,7 @@
       --ml-state-green: oklch(0.78 0.18 145);
       --ml-state-red: oklch(0.7 0.2 25);
       --ml-state-yellow: oklch(0.85 0.17 85);
-      --ml-state-accent: oklch(0.78 0.13 300);
+      --ml-state-accent: #7fa3d9;
 
       --ml-syntax-bg: oklch(1 0 0 / 0.05);
       --ml-syntax-property: oklch(0.78 0.15 295);
@@ -193,7 +193,7 @@
     --color-ml-glass-fg: #fff;
     --color-ml-glass-accent: oklch(1 0 0 / 0.12);
     --color-ml-glass-muted: oklch(1 0 0 / 0.06);
-    --color-ml-accent: oklch(0.78 0.13 300);
+    --color-ml-accent: #7fa3d9;
     --color-ml-resolved: oklch(0.65 0 0);
     --ml-glass-bg: oklch(0.14 0.012 280 / 0.92);
     --ml-glass-bg-small: oklch(0.13 0.012 280 / 0.94);
@@ -228,7 +228,7 @@
     --ml-state-green: oklch(0.78 0.18 145);
     --ml-state-red: oklch(0.7 0.2 25);
     --ml-state-yellow: oklch(0.85 0.17 85);
-    --ml-state-accent: oklch(0.78 0.13 300);
+    --ml-state-accent: #7fa3d9;
 
     --ml-syntax-bg: oklch(1 0 0 / 0.05);
     --ml-syntax-property: oklch(0.78 0.15 295);

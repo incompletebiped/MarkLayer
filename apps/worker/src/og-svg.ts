@@ -1,16 +1,8 @@
-import { MARK_PATHS, MARK_TRANSFORM } from './brand';
+import { MARK_CHECK, MARK_CHECK_WIDTH, MARK_NAVY, MARK_RADIUS, MARK_UNITS } from './brand';
 
 export function escapeXml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
-
-/**
- * Where the artwork actually sits inside the 512 box: it fills neither the width
- * nor the height of it, so scaling the box alone would hang the mark off-center
- * from the wordmark beside it. These are the measured extents of the three paths
- * after `MARK_TRANSFORM`.
- */
-export const MARK_BOX = { x: 27.6, y: -3.4, h: 423.4 };
 
 /* Two axes, and everything on either card sits on one of them: the marks (the
    logo, the favicon) hang at the outer edge, the words start at the inner one. */
@@ -46,14 +38,37 @@ export const TONE = {
  */
 export const SEPARATOR = `<tspan fill="${TONE.faint}">\u00a0\u00a0·\u00a0\u00a0</tspan>`;
 
-/** The mark alone, placed by the artwork's true extents rather than by its box. */
-export function mark({ x, top, height, fill }: { x: number; top: number; height: number; fill: string }): string {
-  const k = height / MARK_BOX.h;
-  const paths = MARK_PATHS.map((d) => `<path d="${d}"/>`).join('');
-  return `<g transform="translate(${(x - MARK_BOX.x * k).toFixed(2)} ${(top - MARK_BOX.y * k).toFixed(2)}) scale(${k.toFixed(6)})" fill="${fill}">
-    <g transform="${MARK_TRANSFORM}">${paths}</g>
-  </g>`;
+/**
+ * The mark: the check alone when `tile` is omitted (the watermark), otherwise the
+ * check on a rounded tile. `top`/`height` are the 24-unit box's, in card pixels.
+ */
+export function mark({
+  x,
+  top,
+  height,
+  check,
+  tile,
+}: {
+  x: number;
+  top: number;
+  height: number;
+  check: string;
+  tile?: string;
+}): string {
+  const k = height / MARK_UNITS;
+  const rx = (MARK_RADIUS.rx / MARK_RADIUS.at) * MARK_UNITS;
+  const back = tile ? `<rect width="${MARK_UNITS}" height="${MARK_UNITS}" rx="${rx.toFixed(3)}" fill="${tile}"/>` : '';
+  return `<g transform="translate(${x.toFixed(2)} ${top.toFixed(2)}) scale(${k.toFixed(6)})">${back}<path d="${MARK_CHECK}" fill="none" stroke="${check}" stroke-width="${MARK_CHECK_WIDTH}" stroke-linecap="square"/></g>`;
 }
 
-/** The logo at the size both cards sign themselves with. */
-export const SIGNATURE_MARK = { x: MARK_AXIS, top: 54, height: 54 };
+/** Both cards sign themselves top-left: the tile at 52px, the wordmark beside it on the mark's center line. */
+export const SIGNATURE_MARK = { x: MARK_AXIS, top: 54, height: 52 };
+
+export function signature(): string {
+  const { x, top, height } = SIGNATURE_MARK;
+  const size = 22;
+  // Geist's caps are ~0.7em tall, so this baseline centers them on the tile.
+  const baseline = top + height / 2 + size * 0.35;
+  return `${mark({ ...SIGNATURE_MARK, check: '#ffffff', tile: MARK_NAVY })}
+  <text x="${x + height + 16}" y="${baseline.toFixed(1)}" font-family="Geist" font-size="${size}" font-weight="700" letter-spacing="2.4" fill="${TONE.ink}">REDLINE</text>`;
+}

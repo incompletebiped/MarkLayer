@@ -14,6 +14,7 @@ import {
   getReplies,
   hostMutationTick,
   openContextMenu,
+  RESOLVED_PIN_COLOR,
   STATUS_LABELS,
   STATUS_STYLES,
   scrollTick,
@@ -134,12 +135,16 @@ export function CommentPin({ op }: { op: CommentOp }) {
             // A marker on someone else's page: flat fill, a surface-coloured ring
             // to separate it from whatever is behind, and one tight shadow. The
             // ring thickens on hover instead of the pin growing.
-            class="w-7 h-7 rounded-full text-white text-meta font-semibold
+            class="w-7 h-7 rounded-sm text-white text-meta font-semibold
                  grid place-items-center
                  shadow-[0_0_0_2px_var(--ds-background-100),0_1px_2px_oklch(0_0_0/0.25)]
                  transition-[box-shadow] duration-150 ease-out
                  group-hover/pin:shadow-[0_0_0_3px_var(--ds-background-100),0_1px_2px_oklch(0_0_0/0.3)]"
-            style={{ background: op.color, opacity: styles.pinOpacity, ...flashRing(op) }}
+            style={{
+              background: status === 'resolved' || status === 'approved' ? RESOLVED_PIN_COLOR : op.color,
+              opacity: styles.pinOpacity,
+              ...flashRing(op),
+            }}
           >
             {op.num}
             {status !== 'open' && (

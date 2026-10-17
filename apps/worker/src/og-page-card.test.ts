@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'bun:test';
+import { MARK_ACCENT } from './brand';
 import { buildPageOgSvg, layoutHeading, measure, pickWord } from './og-page-card';
 
 /** What the composer itself holds the heading to. */
 const HEADING_WIDTH = 1000;
 
 const HEADINGS = [
-  'Markup.io vs MarkLayer',
+  'Markup.io vs Redline',
   'Free Markup.io alternatives for design review',
   'Annotate any webpage with your team',
   'How QA teams report visual bugs on staging without screenshots or Jira attachments',
@@ -40,8 +41,8 @@ describe('layoutHeading', () => {
   it('keeps a heading that still reads big on one line', () => {
     // Two lines at a hair larger would strand "vs" at the break and empty the
     // right half of the card.
-    const { lines, size } = layoutHeading('Markup.io vs MarkLayer');
-    expect(lines).toEqual(['Markup.io vs MarkLayer']);
+    const { lines, size } = layoutHeading('Markup.io vs Redline');
+    expect(lines).toEqual(['Markup.io vs Redline']);
     expect(size).toBeGreaterThanOrEqual(64);
   });
 
@@ -64,14 +65,14 @@ describe('layoutHeading', () => {
   });
 
   it('collapses runs of whitespace instead of measuring them', () => {
-    expect(layoutHeading('Markup.io   vs\n MarkLayer').lines).toEqual(['Markup.io vs MarkLayer']);
+    expect(layoutHeading('Markup.io   vs\n Redline').lines).toEqual(['Markup.io vs Redline']);
   });
 });
 
 describe('pickWord', () => {
   it('picks our own name when the last line carries it', () => {
-    const layout = layoutHeading('Markup.io vs MarkLayer');
-    expect(pickWord(layout)?.text).toBe('MarkLayer');
+    const layout = layoutHeading('Markup.io vs Redline');
+    expect(pickWord(layout)?.text).toBe('Redline');
   });
 
   it('only ever annotates the last line', () => {
@@ -87,8 +88,8 @@ describe('pickWord', () => {
   });
 
   it('leaves trailing punctuation out of the stroke', () => {
-    const layout = layoutHeading('Why teams choose MarkLayer:');
-    expect(pickWord(layout)?.text).toBe('MarkLayer');
+    const layout = layoutHeading('Why teams choose Redline:');
+    expect(pickWord(layout)?.text).toBe('Redline');
   });
 
   it('keeps the stroke inside the line it underlines', () => {
@@ -109,17 +110,18 @@ describe('pickWord', () => {
 
 describe('buildPageOgSvg', () => {
   it('is deterministic: the same page gets the same card back', () => {
-    const once = buildPageOgSvg({ heading: 'Markup.io vs MarkLayer', path: '/vs/markup-io' });
-    const twice = buildPageOgSvg({ heading: 'Markup.io vs MarkLayer', path: '/vs/markup-io' });
+    const once = buildPageOgSvg({ heading: 'Markup.io vs Redline', path: '/vs/markup-io' });
+    const twice = buildPageOgSvg({ heading: 'Markup.io vs Redline', path: '/vs/markup-io' });
     expect(once).toBe(twice);
   });
 
   it('seeds the stroke from the heading alone', () => {
-    const strokeOf = (svg: string) => svg.match(/<path d="([^"]+)" fill="none" stroke=/)?.[1];
-    const a = buildPageOgSvg({ heading: 'Markup.io vs MarkLayer', path: '/vs/markup-io' });
+    const strokeOf = (svg: string) =>
+      svg.match(new RegExp(`<path d="([^"]+)" fill="none" stroke="${MARK_ACCENT}"`))?.[1];
+    const a = buildPageOgSvg({ heading: 'Markup.io vs Redline', path: '/vs/markup-io' });
     // Same letters, same width, same operative word: only the seed can tell them apart.
-    const b = buildPageOgSvg({ heading: 'Markup.oi vs MarkLayer', path: '/vs/markup-io' });
-    const aElsewhere = buildPageOgSvg({ heading: 'Markup.io vs MarkLayer', path: '/other' });
+    const b = buildPageOgSvg({ heading: 'Markup.oi vs Redline', path: '/vs/markup-io' });
+    const aElsewhere = buildPageOgSvg({ heading: 'Markup.io vs Redline', path: '/other' });
     expect(strokeOf(a)).toBeDefined();
     expect(strokeOf(a)).not.toBe(strokeOf(b));
     expect(strokeOf(a)).toBe(strokeOf(aElsewhere));
@@ -138,7 +140,7 @@ describe('buildPageOgSvg', () => {
 
   it('names the site alone on the root, with no dangling separator', () => {
     const svg = buildPageOgSvg({ heading: 'Annotate any webpage', path: '/' });
-    expect(svg).toContain('marklayer.app');
+    expect(svg).toContain('feedback.simplelocalweb.com');
     expect(svg).not.toContain('·');
   });
 
