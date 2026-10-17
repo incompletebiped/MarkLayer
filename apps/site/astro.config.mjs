@@ -6,10 +6,10 @@ import { defineConfig } from 'astro/config';
 import rehypeExternalLinks from 'rehype-external-links';
 import { rehypeCodeBlocks } from './src/lib/rehype-code-blocks.mjs';
 import { rehypeScrollTables } from './src/lib/rehype-scroll-tables.mjs';
-import { WORKER_DEV } from './src/lib/site';
+import { ORIGIN, WORKER_DEV } from './src/lib/site';
 
 export default defineConfig({
-  site: 'https://marklayer.app',
+  site: ORIGIN,
   output: 'static',
 
   // The Worker serves these pages today at extensionless, trailing-slash-free

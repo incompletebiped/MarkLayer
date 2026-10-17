@@ -2,6 +2,9 @@
   "name": "marklayer-worker",
   "main": "src/index.ts",
   "compatibility_date": "2025-03-01",
+  // Custom Domain: `wrangler deploy` creates the proxied DNS record and the
+  // certificate. Don't add a DNS record by hand first — it blocks the attach.
+  "routes": [{ "pattern": "feedback.simplelocalweb.com", "custom_domain": true }],
   "observability": {
     "enabled": true,
     "logs": {
@@ -90,11 +93,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      // "marklayer" here is the desired name; Cloudflare's registered name for
-      // this DB is still "annotateweb" (pre-rename), and `--remote` commands
-      // must say that instead — see migrations/ below and CLAUDE.md.
       "database_name": "marklayer",
-      "database_id": "b19c956e-8602-439b-9c06-242e88da8fbb",
+      "database_id": "9a677271-04db-452d-b317-336496faf625",
       "migrations_dir": "migrations"
     }
   ],
@@ -126,7 +126,7 @@
   // verified destination addresses on the account can receive anything.
   "send_email": [{ "name": "EMAIL" }],
   "vars": {
-    "MAIL_FROM": "login@marklayer.app"
+    "MAIL_FROM": "login@simplelocalweb.com"
     // MAIL_PROVIDER ("cloudflare" | "resend" | "console") pins the mailer and is
     // deliberately unset: with no pin, `mailerFor` takes the EMAIL binding above,
     // and a dev run with no binding falls to the console so the link prints in

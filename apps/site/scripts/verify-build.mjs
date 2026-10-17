@@ -21,9 +21,10 @@ const WORKER_PATHS = new Set([
   '/.well-known/security.txt',
 ]);
 
-const files = await readdir(DIST, { recursive: true });
+// readdir yields `\` on Windows; every comparison below is against URL paths.
+const files = (await readdir(DIST, { recursive: true })).map((f) => f.split('\\').join('/'));
 const htmlFiles = files.filter((f) => f.endsWith('.html'));
-const distSet = new Set(files.map((f) => f.split('\\').join('/')));
+const distSet = new Set(files);
 
 const errors = [];
 

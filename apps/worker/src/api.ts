@@ -88,7 +88,7 @@ const openApiJson = once(() =>
           'Anonymous, no-auth API for creating and reading MarkLayer annotation share links. Pick an unguessable id (nanoid/uuid) — the id is the access token. Share links open at https://marklayer.app/s/{id} (or /p/{id} for project bundles). A link its owner protected with a password answers 401 to every /{id} route unless the request sends `Authorization: Bearer <password>` (or `X-MarkLayer-Password`); ten wrong guesses in 15 minutes answer 429.',
         license: { name: 'MIT', url: 'https://github.com/thevrus/MarkLayer/blob/main/LICENSE' },
       },
-      servers: [{ url: 'https://marklayer.app/api' }],
+      servers: [{ url: 'https://feedback.simplelocalweb.com/api' }],
     }),
   ),
 );

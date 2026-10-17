@@ -10,6 +10,13 @@ apps/worker/public/
 *.log
 bun.lock
 .env.local
+# Local secrets — this fork is public. `.dev.vars` is wrangler's dev-secrets file.
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+# Claude Code session state and handoff notes (infra details, not for a public repo).
+.claude/
 .maestro
 .playwright-mcp
 

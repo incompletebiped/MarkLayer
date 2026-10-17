@@ -479,10 +479,10 @@ app.get('/.well-known/api-catalog', (c) =>
 // never goes stale.
 const securityTxt = once(() => {
   const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-  return `Contact: mailto:hello@marklayer.app
+  return `Contact: mailto:hello@simplelocalweb.com
 Expires: ${expires}
 Preferred-Languages: en
-Canonical: https://marklayer.app/.well-known/security.txt
+Canonical: https://feedback.simplelocalweb.com/.well-known/security.txt
 `;
 });
 
