@@ -1231,7 +1231,16 @@ export const DAY_SECONDS = 24 * 60 * 60;
 export const MAX_EXPIRES_IN_SECONDS = 30 * DAY_SECONDS;
 
 /** A signed-in person, as the server holds them and as `/auth/me` returns them. */
-export const sessionUserSchema = z.object({ id: z.string(), email: z.string() });
+export const sessionUserSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  /** The display name chosen while signed in; null until one is. Absent from older servers. */
+  name: z.optional(z.nullable(z.string())),
+});
+/** The longest display name a room or an account keeps. */
+export const USER_NAME_MAX = 64;
+/** What `PATCH /auth/me` takes: a display name, as the viewer's name field trims it. */
+export const updateProfileSchema = z.object({ name: z.string().check(z.minLength(1), z.maxLength(USER_NAME_MAX)) });
 export type SessionUser = z.infer<typeof sessionUserSchema>;
 
 /**

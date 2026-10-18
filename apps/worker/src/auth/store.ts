@@ -88,16 +88,20 @@ export function authStore(db: D1Database) {
     async userForSession(token: string): Promise<User | null> {
       const row = await db
         .prepare(
-          'SELECT users.id AS id, users.email AS email, users.last_seen_at AS last_seen_at, sessions.expires_at AS expires_at FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.id = ?',
+          'SELECT users.id AS id, users.email AS email, users.name AS name, users.last_seen_at AS last_seen_at, sessions.expires_at AS expires_at FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.id = ?',
         )
         .bind(await hashToken(token))
-        .first<{ id: string; email: string; last_seen_at: number | null; expires_at: number }>();
+        .first<{ id: string; email: string; name: string | null; last_seen_at: number | null; expires_at: number }>();
       if (!row || isExpired(row.expires_at)) return null;
       const now = nowInSeconds();
       if ((row.last_seen_at ?? 0) < now - SEEN_BUMP_SECONDS) {
         await db.prepare('UPDATE users SET last_seen_at = ? WHERE id = ?').bind(now, row.id).run();
       }
-      return { id: row.id, email: row.email };
+      return { id: row.id, email: row.email, name: row.name ?? null };
+    },
+
+    async setName({ id, name }: { id: string; name: string }): Promise<void> {
+      await db.prepare('UPDATE users SET name = ? WHERE id = ?').bind(name, id).run();
     },
 
     async deleteSession(token: string): Promise<void> {

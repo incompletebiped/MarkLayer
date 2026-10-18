@@ -1,3 +1,4 @@
+import { USER_NAME_MAX } from '@marklayer/types';
 import { z } from 'zod/mini';
 
 /**
@@ -40,7 +41,7 @@ export type PeerInfo = z.infer<typeof peerInfoSchema>;
 
 const DEFAULT_COLOR = '#8b5cf6';
 const COLOR_RE = /^#[0-9a-f]{6}$/i;
-const MAX_NAME_LEN = 64;
+const MAX_NAME_LEN = USER_NAME_MAX;
 /** Client-supplied and stored verbatim, so it is length-capped like the name. */
 const MAX_UID_LEN = 64;
 

@@ -8,6 +8,7 @@ import {
   setLinkPasswordSchema,
   signInRequestSchema,
   updateLinkSettingsSchema,
+  updateProfileSchema,
 } from '@marklayer/types';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { csrf } from 'hono/csrf';
@@ -96,6 +97,17 @@ const UNDELIVERABLE = 'We cannot deliver mail to that address. Check it for a ty
 export const auth = new Hono<AuthApp>();
 
 auth.use('*', withUser);
+
+// The name follows the account, not the browser. csrf(): only our own pages may rename you.
+auth.patch('/me', csrf(), async (c) => {
+  const user = c.get('user');
+  if (!user) return c.json({ error: 'Sign in first.' }, 401);
+  const body = updateProfileSchema.safeParse(await c.req.json().catch(() => null));
+  const name = body.success ? body.data.name.trim() : '';
+  if (!name) return c.json({ error: 'A name is required.' }, 400);
+  await authStore(c.env.DB).setName({ id: user.id, name });
+  return c.json({ ok: true }, 200);
+});
 
 auth.get('/me', (c) => {
   const user = c.get('user');

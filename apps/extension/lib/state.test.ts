@@ -33,6 +33,8 @@ const {
   color,
   copyInspectorStack,
   colorName,
+  isRandomUserName,
+  randomUserName,
   comments,
   commentCounter,
   cursorColorName,
@@ -739,6 +741,19 @@ function withConfirm(answer: boolean, body: () => void): boolean {
   }
   return asked;
 }
+
+describe('isRandomUserName', () => {
+  test('recognises every name the roller can produce', () => {
+    for (let i = 0; i < 50; i++) expect(isRandomUserName(randomUserName())).toBe(true);
+  });
+
+  test('treats anything a person typed as a choice', () => {
+    expect(isRandomUserName('Bailey Killian')).toBe(false);
+    expect(isRandomUserName('Bailey')).toBe(false);
+    // A placeholder with a word added is no longer the roller's.
+    expect(isRandomUserName(`${randomUserName()} Jr`)).toBe(false);
+  });
+});
 
 describe('colorName', () => {
   test('names a palette colour, case-insensitively', () => {

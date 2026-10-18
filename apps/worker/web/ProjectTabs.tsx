@@ -4,9 +4,9 @@ import { operations, toast } from '@ext/lib/state';
 import { cn } from '@marklayer/types';
 import { Plus, Trash2, X } from 'lucide-preact';
 import { useState } from 'preact/hooks';
+import { navigateTo, switchToPage } from './projects';
 import {
   annotationId,
-  createAnnotationFor,
   currentPageIdx,
   isReadonly,
   pageUrl,
@@ -47,17 +47,7 @@ export function ProjectTabs() {
 
   if (!pid || pages.length === 0) return null;
 
-  const switchTo = (i: number) => {
-    if (i === idx) return;
-    // Snapshot current page's ops back into the cached list before switching
-    const updated = pages.map((p, j) => (j === idx ? { ...p, ops: [...operations.value] } : p));
-    projectPages.value = updated;
-    currentPageIdx.value = i;
-    const url = new URL(location.href);
-    if (i === 0) url.searchParams.delete('page');
-    else url.searchParams.set('page', String(i));
-    history.replaceState(null, '', url);
-  };
+  const switchTo = switchToPage;
 
   const deletePage = async (i: number, e: Event) => {
     e.stopPropagation();
@@ -95,39 +85,14 @@ export function ProjectTabs() {
     toast('Page removed', { type: 'success' });
   };
 
+  // The same path a link click takes, so a page the board already has is switched to rather than added twice.
   const submitAdd = async (e: Event) => {
     e.preventDefault();
     const typed = newUrl.trim();
     if (!typed) return;
-    const url = withScheme(typed);
-    projectLoading.value = true;
-    const created = await createAnnotationFor(url);
-    if ('error' in created) {
-      projectLoading.value = false;
-      toast(created.error, { type: 'error' });
-      return;
-    }
-    const newPageId = created.id;
-    // Persist current page's ops snapshot before switching
-    const snapshot = pages.map((p, j) => (j === idx ? { ...p, ops: [...operations.value] } : p));
-    const next: typeof pages = [...snapshot, { id: newPageId, url, width: window.innerWidth, ops: [] }];
-    projectPages.value = next;
-    const ok = await saveProject(
-      pid,
-      next.map((p) => p.id),
-    );
-    if (!ok) {
-      projectLoading.value = false;
-      return;
-    }
-    // Switch to the newly added tab
-    currentPageIdx.value = next.length - 1;
-    const navUrl = new URL(location.href);
-    navUrl.searchParams.set('page', String(next.length - 1));
-    history.replaceState(null, '', navUrl);
+    await navigateTo({ url: withScheme(typed), source: 'add_page' });
     setNewUrl('');
     setAdding(false);
-    projectLoading.value = false;
   };
 
   return (

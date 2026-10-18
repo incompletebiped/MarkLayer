@@ -44,6 +44,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'preact/hooks';
 import { tinykeys } from 'tinykeys';
 import type { Firewall } from '../src/proxy';
 import type { ExportData } from './AnnotationPanel';
+import { syncAccountName } from './accountName';
 import { capture } from './analytics';
 import { frameViewport, isElementNode, sameOriginWindow } from './iframeOverlay';
 import { ProjectTabs } from './ProjectTabs';
@@ -195,6 +196,9 @@ export default function Viewer() {
     void pageUrl.value;
     pageErrors.value = [];
   });
+
+  // Signed in, your display name comes from your account and is saved back to it.
+  useEffect(syncAccountName, []);
 
   // Project init: when /p/:id is in the URL, fetch all pages and activate the selected one.
   useEffect(() => {

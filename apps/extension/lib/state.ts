@@ -303,6 +303,12 @@ export function randomUserName(): string {
   return `${randomPick(ADJECTIVES)} ${randomPick(ANIMALS)}`;
 }
 
+/** Whether a name is one `randomUserName` could have rolled: a placeholder, not a choice. */
+export function isRandomUserName(name: string): boolean {
+  const [adjective, animal, ...rest] = name.split(' ');
+  return rest.length === 0 && ADJECTIVES.some((a) => a === adjective) && ANIMALS.some((a) => a === animal);
+}
+
 const savedName = lsGet('ml-username');
 const savedCursorColor = lsGet('ml-usercolor');
 const savedClientId = lsGet('ml-clientid');

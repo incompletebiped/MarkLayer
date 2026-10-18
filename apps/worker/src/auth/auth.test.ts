@@ -87,7 +87,7 @@ describe('authStore.userForSession', () => {
   // person can use this for a month without the sign-in path ever running again.
   test('refreshes last_seen_at when it is older than the bump window', async () => {
     const db = fakeDb({ first: session(now - SEEN_BUMP_SECONDS - 60) });
-    expect(await authStore(asDb(db)).userForSession('tok')).toEqual({ id: 'u1', email: 'a@b.com' });
+    expect(await authStore(asDb(db)).userForSession('tok')).toEqual({ id: 'u1', email: 'a@b.com', name: null });
     expect(db.calls).toHaveLength(2);
     expect(db.calls[1].sql).toContain('UPDATE users SET last_seen_at');
     expect(db.calls[1].bindings[1]).toBe('u1');
@@ -344,5 +344,55 @@ describe('/verify', () => {
     );
     expect(res.status).toBe(403);
     expect(db.calls).toHaveLength(0);
+  });
+});
+
+describe('PATCH /auth/me', () => {
+  const sessionRow = {
+    id: 'u1',
+    email: 'me@example.com',
+    name: null,
+    last_seen_at: nowInSeconds(),
+    expires_at: nowInSeconds() + 1000,
+  };
+  const rename = ({ db, body, cookie }: { db: ReturnType<typeof fakeDb>; body: unknown; cookie?: string }) =>
+    auth.request(
+      '/me',
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...(cookie ? { Cookie: cookie } : {}) },
+        body: JSON.stringify(body),
+      },
+      { DB: asDb(db) },
+      testCtx,
+    );
+
+  test('saves the trimmed name to the signed-in account', async () => {
+    const db = fakeDb({ firstQueue: [sessionRow] });
+    const res = await rename({ db, body: { name: '  Bailey  ' }, cookie: `${SESSION_COOKIE}=tok` });
+    expect(res.status).toBe(200);
+    const update = db.calls.find((call) => call.sql.startsWith('UPDATE users SET name'));
+    expect(update?.bindings).toEqual(['Bailey', 'u1']);
+  });
+
+  test('is 401 signed out, and writes nothing', async () => {
+    const db = fakeDb();
+    const res = await rename({ db, body: { name: 'Bailey' } });
+    expect(res.status).toBe(401);
+    expect(db.calls.some((call) => call.sql.startsWith('UPDATE users'))).toBe(false);
+  });
+
+  test('refuses a blank name rather than clearing the saved one', async () => {
+    const db = fakeDb({ firstQueue: [sessionRow] });
+    const res = await rename({ db, body: { name: '   ' }, cookie: `${SESSION_COOKIE}=tok` });
+    expect(res.status).toBe(400);
+    expect(db.calls.some((call) => call.sql.startsWith('UPDATE users SET name'))).toBe(false);
+  });
+
+  test('GET /me hands the saved name back', async () => {
+    const db = fakeDb({ firstQueue: [{ ...sessionRow, name: 'Bailey' }] });
+    const res = await auth.request('/me', { headers: { Cookie: `${SESSION_COOKIE}=tok` } }, { DB: asDb(db) }, testCtx);
+    const body = await res.json<{ user: { name: string } }>();
+    expect(body.user.name).toBe('Bailey');
   });
 });

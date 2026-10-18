@@ -11,6 +11,7 @@ import {
 import { signal } from '@preact/signals';
 import { nanoid } from 'nanoid';
 import { capture } from './analytics';
+import { cleanPageUrl } from './pageUrl';
 
 export interface ProjectPage {
   id: string;
@@ -107,6 +108,18 @@ export function fileUrl(id: string): string {
   return uploadPath(id);
 }
 
+/** Show page `i` of the open project, keeping the ops of the one being left. */
+export function switchToPage(i: number) {
+  const idx = currentPageIdx.value;
+  if (i === idx) return;
+  projectPages.value = projectPages.value.map((p, j) => (j === idx ? { ...p, ops: [...operations.value] } : p));
+  currentPageIdx.value = i;
+  const url = new URL(location.href);
+  if (i === 0) url.searchParams.delete('page');
+  else url.searchParams.set('page', String(i));
+  history.replaceState(null, '', url);
+}
+
 /** What the server says when starting a board is the team's alone; shown as is. */
 export const TEAM_ONLY_TOAST = 'That page is on another site. Only the team can start a board there.';
 
@@ -136,14 +149,25 @@ export const withScheme = (url: string): string => unwrapSafeLink(/^https?:\/\//
  * - In single-share mode (`/s/:id`): convert to a project bundling the current + new page, redirect to `/p/:projectId`.
  * - On landing (no context): create a fresh `/s/:id` share for the new URL.
  */
-export async function navigateTo({ url, source = 'viewer' }: { url: string; source?: string }) {
+export async function navigateTo({ url: raw, source = 'viewer' }: { url: string; source?: string }) {
+  // One page per click: a link can report twice, and a second create while the
+  // first is in flight left an orphaned copy of the page behind.
+  if (projectLoading.value) return;
+  const url = cleanPageUrl(raw);
   const pid = projectId.value;
+  // A page the board already has is switched to, not opened again.
+  if (pid) {
+    const existing = projectPages.value.findIndex((p) => p.url !== null && cleanPageUrl(p.url) === url);
+    if (existing !== -1) {
+      switchToPage(existing);
+      return;
+    }
+  }
   // Which of the three shapes a session takes — a first page, a second page that
   // promotes a share into a project, another page on an existing project — and
   // what asked for it. Counted here because this is where every entry point lands.
   capture('page_opened', { mode: pid ? 'project_page' : annotationId.value ? 'promoted' : 'new', source });
   if (pid) {
-    if (projectLoading.value) return;
     projectLoading.value = true;
     const created = await createAnnotationFor(url);
     if ('error' in created) {
@@ -180,6 +204,8 @@ export async function navigateTo({ url, source = 'viewer' }: { url: string; sour
   // Single-share mode: promote into a project bundling current + new
   const currentId = annotationId.value;
   const currentUrl = pageUrl.value;
+  // A link back to the page already open (a logo, a "home" link) is no new page.
+  if (currentId && currentUrl && cleanPageUrl(currentUrl) === url) return;
   if (currentId && currentUrl) {
     projectLoading.value = true;
     // Best-effort flush of current ops so the project's first page has them on first read
