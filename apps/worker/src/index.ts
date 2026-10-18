@@ -69,6 +69,8 @@ export type Env = {
      * blocks Cloudflare's shared egress. Both unset — the default — means no
      * fallback, which is how the proxy behaved before the relay existed.
      */
+    /** Email domains allowed to start boards (auth/team.ts). Unset: anyone may. */
+    TEAM_EMAIL_DOMAINS?: string;
     FETCHER_URL?: string;
     FETCHER_TOKEN?: string;
     /**

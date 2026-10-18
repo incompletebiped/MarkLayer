@@ -1352,7 +1352,11 @@ export function resolveOwnerExpiresAt({
   return now + ownerExpiresIn;
 }
 
-export const sessionResponseSchema = z.object({ user: z.nullable(sessionUserSchema) });
+export const sessionResponseSchema = z.object({
+  user: z.nullable(sessionUserSchema),
+  /** Whether this visitor may start a new board. Absent from servers that predate the team gate. */
+  canStartBoards: z.optional(z.boolean()),
+});
 export const ownedLinksResponseSchema = z.object({ links: z.array(ownedLinkSchema) });
 export const errorResponseSchema = z.object({ error: z.string() });
 

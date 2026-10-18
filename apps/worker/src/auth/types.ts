@@ -1,5 +1,6 @@
 import { DAY_SECONDS, type SessionUser } from '@marklayer/types';
 import type { EmailEnv } from '../email';
+import type { TeamEnv } from './team';
 
 /**
  * Auth needs a database and whatever the email engine needs; it defines neither
@@ -7,14 +8,15 @@ import type { EmailEnv } from '../email';
  * changed who may edit. POSTHOG_* is here so the funnel counters in routes.ts
  * can call captureServer without widening to the whole worker Env.
  */
-export type AuthEnv = EmailEnv & {
-  DB: D1Database;
-  ANNOTATION_ROOM: DurableObjectNamespace;
-  POSTHOG_KEY?: string;
-  POSTHOG_HOST?: string;
-  /** Caps mail to typed-in addresses per client IP. Absent in dev and tests, which then run unlimited. */
-  EMAIL_LIMITER?: RateLimit;
-};
+export type AuthEnv = EmailEnv &
+  TeamEnv & {
+    DB: D1Database;
+    ANNOTATION_ROOM: DurableObjectNamespace;
+    POSTHOG_KEY?: string;
+    POSTHOG_HOST?: string;
+    /** Caps mail to typed-in addresses per client IP. Absent in dev and tests, which then run unlimited. */
+    EMAIL_LIMITER?: RateLimit;
+  };
 
 /**
  * The same shape `/auth/me` returns, inferred from the schema both sides parse

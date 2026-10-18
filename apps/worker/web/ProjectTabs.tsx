@@ -101,11 +101,13 @@ export function ProjectTabs() {
     if (!typed) return;
     const url = withScheme(typed);
     projectLoading.value = true;
-    const newPageId = await createAnnotationFor(url);
-    if (!newPageId) {
+    const created = await createAnnotationFor(url);
+    if ('error' in created) {
       projectLoading.value = false;
+      toast(created.error, { type: 'error' });
       return;
     }
+    const newPageId = created.id;
     // Persist current page's ops snapshot before switching
     const snapshot = pages.map((p, j) => (j === idx ? { ...p, ops: [...operations.value] } : p));
     const next: typeof pages = [...snapshot, { id: newPageId, url, width: window.innerWidth, ops: [] }];

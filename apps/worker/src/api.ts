@@ -12,6 +12,7 @@ import {
 import type { Context } from 'hono';
 import { cors } from 'hono/cors';
 import { userFromCookieHeader } from './auth';
+import { requestMayStartBoards, TEAM_ONLY } from './auth/team';
 import { dayCached, once } from './http';
 import type { Env } from './index';
 import {
@@ -220,6 +221,10 @@ const StoreAnnotationBody = z
         .openapi({ format: 'uri', description: 'Page the share link overlays annotations onto' }),
       width: z.int().optional().openapi({ description: 'Reference viewport width in CSS pixels (e.g. 1440)' }),
       expires_in: expiresInField,
+      from: z.string().optional().openapi({
+        description:
+          'The room this page was opened from. Where starting boards is limited to the team, anyone may still add a page from the same site as that room.',
+      }),
     }),
   ])
   .openapi('StoreAnnotation');
@@ -260,6 +265,36 @@ function surfaceFrom({
   }
 }
 
+/**
+ * Whether a page at `url` opened from room `from` stays on that room's website.
+ * That is how a client browsing their own site inside a shared link adds the next
+ * page without being on the team: the room must exist, be open to them, and sit
+ * on the same origin.
+ */
+async function sameSiteAs({
+  db,
+  from,
+  url,
+  headers,
+}: {
+  db: D1Database;
+  from: string | undefined;
+  url: string | null;
+  headers: Headers;
+}): Promise<boolean> {
+  if (!from || !url) return false;
+  const roomUrl = await annotationStore(db).getUrl(from);
+  if (!roomUrl || !(await roomAccess({ db, id: from, headers })).open) return false;
+  try {
+    return new URL(roomUrl).origin === new URL(url).origin;
+  } catch {
+    return false;
+  }
+}
+
+/** Whether this request may mint a new room or project. */
+const mayCreate = requestMayStartBoards;
+
 const storeAnnotation = createRoute({
   method: 'post',
   path: '/{id}',
@@ -272,7 +307,7 @@ const storeAnnotation = createRoute({
     ...LOCKED_RESPONSES,
     200: jsonRes(OkResponse, 'Stored'),
     400: jsonRes(ErrorResponse, 'Invalid operations data'),
-    403: jsonRes(ErrorResponse, 'Link is view-only'),
+    403: jsonRes(ErrorResponse, 'Link is view-only, or a new link from someone outside the team'),
   },
 });
 
@@ -301,13 +336,27 @@ api.openapi(storeAnnotation, async (c) => {
     return c.json({ error: 'Invalid operations data' }, 400);
   }
 
+  const store = annotationStore(c.env.DB);
+  const current = await store.getAccess(id);
+  // No row yet means this write would mint the room: the team may, and so may a
+  // page opened from inside a room on the same site.
+  if (
+    !current &&
+    !(await mayCreate({ env: c.env, cookie: c.req.header('cookie') })) &&
+    !(await sameSiteAs({
+      db: c.env.DB,
+      from: Array.isArray(body) ? undefined : body.from,
+      url,
+      headers: c.req.raw.headers,
+    }))
+  ) {
+    return c.json({ error: TEAM_ONLY }, 403);
+  }
+
   // The DO's websocket gate isn't the only writer: this REST route is the one
   // real-time sync falls back to when the socket is down, and the one thing
   // anonymous API callers hit directly. Both must respect a link the owner set
   // to view-only, so the check lives here too rather than only in the DO.
-  const store = annotationStore(c.env.DB);
-  const current = await store.getAccess(id);
-
   // `canEditLink` is the rule, shared with the room's own gate. The `view` test
   // in front of it only skips a session lookup on a link where it cannot say no.
   if (current?.access === 'view') {
@@ -412,12 +461,14 @@ const createPreview = createRoute({
   responses: {
     200: jsonRes(PreviewCreatedResponse, 'Created'),
     400: jsonRes(ErrorResponse, 'Invalid preview'),
+    403: jsonRes(ErrorResponse, 'Starting a room is limited to the team'),
     409: jsonRes(ErrorResponse, 'Id already taken'),
   },
 });
 
 api.openapi(createPreview, async (c) => {
   const { id } = c.req.valid('param');
+  if (!(await mayCreate({ env: c.env, cookie: c.req.header('cookie') }))) return c.json({ error: TEAM_ONLY }, 403);
   const body = c.req.valid('json');
   const parsed = SharePreviewInput.safeParse(body);
   if (!parsed.success) {
@@ -759,6 +810,7 @@ const storeProject = createRoute({
   responses: {
     200: jsonRes(OkResponse, 'Stored'),
     400: jsonRes(ErrorResponse, 'Invalid pageIds'),
+    403: jsonRes(ErrorResponse, 'A new project, from outside the team, naming a page that does not exist'),
   },
 });
 
@@ -770,8 +822,18 @@ api.openapi(storeProject, async (c) => {
   if (pageIds.length > MAX_PAGES_PER_PROJECT) {
     return c.json({ error: `Project exceeds ${MAX_PAGES_PER_PROJECT} pages` }, 400);
   }
+  const projects = projectStore(c.env.DB);
+  // A project only bundles rooms, so outside the team it may bundle only rooms
+  // that already exist — the ones a client just opened on their own site.
+  if (
+    !(await projects.get(id)) &&
+    !(await mayCreate({ env: c.env, cookie: c.req.header('cookie') })) &&
+    (await annotationStore(c.env.DB).getMany(pageIds)).size !== new Set(pageIds).size
+  ) {
+    return c.json({ error: TEAM_ONLY }, 403);
+  }
   const expiresAt = expiresAtFrom(body.expires_in);
-  if (!(await projectStore(c.env.DB).put({ id, pageIds, expiresAt }))) {
+  if (!(await projects.put({ id, pageIds, expiresAt }))) {
     return c.json({ error: WEAK_NEW_ID }, 400);
   }
   return c.json({ ok: true }, 200);

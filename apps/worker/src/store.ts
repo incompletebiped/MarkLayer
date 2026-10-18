@@ -33,17 +33,20 @@ const wroteRow = (res: D1Response): boolean => (res.meta.changes ?? 0) > 0;
  * Every write that can also create a row. A weak id may only ever update one
  * that already exists, so a squatter cannot mint a guessable room; the miss is
  * what `wroteRow` reports. One guard so the rule cannot drift between writers.
+ * `mayCreate: false` holds any id to the same rule: update or nothing.
  */
 async function upsertGuarded({
   id,
   update,
   insert,
+  mayCreate = true,
 }: {
   id: string;
   update: () => Promise<D1Response>;
   insert: () => Promise<D1Response>;
+  mayCreate?: boolean;
 }): Promise<boolean> {
-  if (!isNewShareId(id)) return wroteRow(await update());
+  if (!mayCreate || !isNewShareId(id)) return wroteRow(await update());
   await insert();
   return true;
 }
@@ -292,11 +295,13 @@ export function annotationStore(db: D1Database) {
 
     /**
      * Write ops alone, preserving url/width/expiry — the realtime room's flush.
-     * False when the id was too weak to mint a room at; see `wroteRow`.
+     * False when the id was too weak to mint a room at, or `mayCreate` is false
+     * and there is no room yet; see `wroteRow`.
      */
-    async putOps({ id, ops }: { id: string; ops: unknown[] }): Promise<boolean> {
+    async putOps({ id, ops, mayCreate }: { id: string; ops: unknown[]; mayCreate?: boolean }): Promise<boolean> {
       return upsertGuarded({
         id,
+        mayCreate,
         update: () =>
           db
             .prepare('UPDATE annotations SET ops = ?, last_accessed_at = unixepoch() WHERE id = ?')

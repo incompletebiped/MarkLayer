@@ -1,9 +1,10 @@
 import { Toasts } from '@ext/components/Toasts';
-import { cn, UPLOAD_ACCEPT } from '@marklayer/types';
+import { cn, sessionResponseSchema, UPLOAD_ACCEPT } from '@marklayer/types';
+import { useSignal } from '@preact/signals';
 import { COLOPHON, FOOTER_COLUMNS } from '@site/lib/footer';
 import { Check } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
-import { useRef } from 'preact/hooks';
+import { useEffect, useRef } from 'preact/hooks';
 import { useLandingUpload } from './landing/useLandingUpload';
 import { Wordmark } from './shared';
 import { navigateTo, withScheme } from './signals';
@@ -228,8 +229,42 @@ function StartForm() {
   );
 }
 
+const BTN_CLS =
+  'rounded-lg bg-ml-btn px-[18px] py-[11px] font-semibold text-ml-btn-fg no-underline transition-colors hover:bg-ml-btn-hover';
+
+/** In place of the form for anyone not signed in on the team: clients only ever need the link they were sent. */
+function TeamOnly() {
+  return (
+    <div
+      id="start"
+      class="flex max-w-[480px] scroll-mt-24 flex-col items-start gap-4 rounded-lg border border-ml-rule bg-white p-5"
+    >
+      <p class="m-0 text-body leading-prose text-ml-slate">
+        <strong class="text-ml-fg">Got a link from us?</strong> Just open it. There’s no account to make. Starting a new
+        redline is for the Simple Local Web team.
+      </p>
+      <a href="/app" class={BTN_CLS}>
+        Team sign in
+      </a>
+    </div>
+  );
+}
+
 /** The landing page, from the Redline brand sheet: navy carries the name, red is only ever a mark. */
 export function Landing() {
+  // Null until the session answers; the form shows meanwhile, since the server refuses a create either way.
+  const canStart = useSignal<boolean | null>(null);
+  useEffect(() => {
+    fetch('/auth/me')
+      .then((res) => res.json())
+      .then((json) => {
+        const parsed = sessionResponseSchema.safeParse(json);
+        canStart.value = parsed.success ? (parsed.data.canStartBoards ?? true) : null;
+      })
+      .catch(() => undefined);
+  }, []);
+  const teamOnly = canStart.value === false;
+
   return (
     <div class="ml-force-light min-h-screen bg-ml-bg font-ui text-ml-fg">
       <header class="sticky top-0 z-10 border-b border-ml-rule bg-white/95 backdrop-blur">
@@ -247,11 +282,8 @@ export function Landing() {
                 {label}
               </a>
             ))}
-            <a
-              href="#start"
-              class="rounded-lg bg-ml-btn px-[18px] py-[11px] font-semibold text-ml-btn-fg no-underline transition-colors hover:bg-ml-btn-hover"
-            >
-              Start a redline
+            <a href={teamOnly ? '/app' : '#start'} class={BTN_CLS}>
+              {teamOnly ? 'Team sign in' : 'Start a redline'}
             </a>
           </div>
         </nav>
@@ -273,7 +305,7 @@ export function Landing() {
               Circle a photo, point at a button, flag a typo, or tell us something just feels off. Every mark lands on
               our list, and you watch each one get checked off.
             </p>
-            <StartForm />
+            {teamOnly ? <TeamOnly /> : <StartForm />}
             <p class="m-0 flex flex-wrap gap-x-5 gap-y-1 text-ui-lg text-ml-muted">
               <span>No account</span>
               <span>Nothing to install</span>

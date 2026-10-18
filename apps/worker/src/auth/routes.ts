@@ -20,6 +20,7 @@ import { captureServer } from '../posthog';
 import { annotationStore, inviteStore, nowInSeconds } from '../store';
 import { type AuthVariables, withUser } from './middleware';
 import { authStore, folderStore, ownedStore } from './store';
+import { mayStartBoards } from './team';
 import { mintToken } from './tokens';
 import { type AuthEnv, normalizeEmail, SESSION_COOKIE, SESSION_TTL_SECONDS, type User } from './types';
 import { confirmPage, expiredPage, isTokenShaped } from './verify-page';
@@ -96,7 +97,10 @@ export const auth = new Hono<AuthApp>();
 
 auth.use('*', withUser);
 
-auth.get('/me', (c) => c.json({ user: c.get('user') }));
+auth.get('/me', (c) => {
+  const user = c.get('user');
+  return c.json({ user, canStartBoards: mayStartBoards({ env: c.env, email: user?.email }) });
+});
 
 auth.post('/request', async (c) => {
   const body = signInRequestSchema.safeParse(await c.req.json().catch(() => null));

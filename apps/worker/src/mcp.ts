@@ -33,6 +33,7 @@ import {
 import { McpServer, WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/server';
 import { nanoid } from 'nanoid';
 import type { AnnotationRoom } from './annotation-room';
+import { TEAM_ONLY, type TeamEnv, teamGated } from './auth/team';
 import { outlinePage } from './page-outline';
 import { captureServer } from './posthog';
 import { createPreviewRoom } from './preview';
@@ -370,7 +371,7 @@ export async function handleMcpRequest({
   roomId: string;
   apiBase: string;
   agentId: string;
-  env: Parameters<typeof fetchPage>[0]['env'] & { DB: D1Database };
+  env: Parameters<typeof fetchPage>[0]['env'] & TeamEnv & { DB: D1Database };
   ctx: { waitUntil(promise: Promise<unknown>): void };
 }): Promise<Response> {
   const room = new WorkerRoom(stub, roomId, agentId, env);
@@ -380,15 +381,18 @@ export async function handleMcpRequest({
     apiBase,
     // The endpoint stays bound to this room, so a new preview is opened beside it
     // and chained to it when repo and branch match.
-    createPreview: (req) =>
-      createPreviewRoom({
-        db: env.DB,
-        request: req,
-        agentId,
-        origin: apiBase,
-        headers: request.headers,
-        fallbackPrevious: roomId,
-      }),
+    // An agent carries no session, so where starting rooms is the team's alone it cannot open one.
+    createPreview: async (req) =>
+      teamGated(env)
+        ? { error: TEAM_ONLY }
+        : createPreviewRoom({
+            db: env.DB,
+            request: req,
+            agentId,
+            origin: apiBase,
+            headers: request.headers,
+            fallbackPrevious: roomId,
+          }),
     // Name, outcome and time only: arguments and results carry room ids, page URLs and comment text.
     onToolCall: (call) => captureServer(env, ctx, 'mcp_tool_called', call),
   });

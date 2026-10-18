@@ -13,6 +13,7 @@ import {
   type RtcMessageType,
 } from '@marklayer/types';
 import { userFromCookieHeader } from './auth';
+import { teamGated } from './auth/team';
 import { STUN_ONLY, stripPort53 } from './ice';
 import { deliver, parseIntegrations } from './integrations/deliver';
 import { isSlackOp } from './integrations/slack-app';
@@ -31,6 +32,7 @@ interface Env {
   POSTHOG_HOST?: string;
   /** Unset means the Slack app is off, and the room never reads its install. */
   SLACK_TOKEN_KEY?: string;
+  TEAM_EMAIL_DOMAINS?: string;
 }
 
 // TURN creds are tied to the worker's key (not per-room), so a module-level
@@ -897,7 +899,10 @@ export class AnnotationRoom extends DurableObject<Env> {
     // notification flush reads, and neither needs the other's result. Settled
     // rather than raced so a failing send cannot swallow the persist.
     // Cleared up front so an op landing mid-write keeps the room dirty.
-    const write = this.dirty && this.ops ? annotationStore(this.env.DB).putOps({ id, ops: this.ops }) : null;
+    const write =
+      this.dirty && this.ops
+        ? annotationStore(this.env.DB).putOps({ id, ops: this.ops, mayCreate: !teamGated(this.env) })
+        : null;
     if (write) this.dirty = false;
     const [persisted] = await Promise.allSettled([write, this.flushNotifications(id), this.flushSlack(id)]);
     if (persisted.status === 'rejected') {
