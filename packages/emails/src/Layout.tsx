@@ -1,5 +1,8 @@
-import { Body, Container, Head, Hr, Html, Preview, Section, Text } from '@react-email/components';
+import { Body, Container, Head, Hr, Html, Img, Preview, Section, Text } from '@react-email/components';
 import type { ReactNode } from 'react';
+
+/** Where Redline lives: the footer link, and the host the header logo loads from. */
+const SITE = 'https://redline.simplelocalweb.com';
 
 /**
  * The shell every Redline email shares. Templates supply a body and a preview
@@ -25,17 +28,25 @@ export function Layout({ preview, children }: { preview: string; children: React
       <Preview>{preview}</Preview>
       <Body className="bg-white font-sans text-ml-fg m-0 p-0">
         <Container className="mx-auto max-w-[480px] px-6 py-10">
-          {/* The wordmark as type, not an image: a remote logo is blocked by
-              default in most clients, and a sign-in email that opens with a
-              broken-image icon is the wrong first impression. */}
-          <Text className="text-ml-brand m-0 mb-8 text-[15px] font-bold tracking-[0.12em]">REDLINE</Text>
+          {/* The lockup as an image: no mail client renders Barlow Condensed, so
+              type alone can't carry the wordmark. Where images are blocked
+              (Outlook by default), the alt text is styled to read as the
+              wordmark instead of a broken-image icon. The file is 3x, for sharp
+              screens, and lives in apps/worker/static. */}
+          <Img
+            src={`${SITE}/email-logo.png`}
+            width="120"
+            height="32"
+            alt="REDLINE"
+            className="text-ml-brand m-0 mb-8 text-[15px] font-bold tracking-[0.12em]"
+          />
           {children}
           <Hr className="my-8 border-0 border-t border-solid border-[#eaeaea]" />
           <Section>
             <Text className="m-0 text-[12px] leading-[18px] text-[#8f8f8f]">
               Redline by Simple Local Web ·{' '}
-              <a href="https://feedback.simplelocalweb.com" className="text-ml-brand">
-                feedback.simplelocalweb.com
+              <a href={SITE} className="text-ml-brand">
+                {new URL(SITE).host}
               </a>
             </Text>
           </Section>

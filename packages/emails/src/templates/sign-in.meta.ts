@@ -20,5 +20,5 @@ export const text = [
   '',
   'If you did not ask to sign in, ignore this email. Nothing will happen.',
   '',
-  'Redline by Simple Local Web · feedback.simplelocalweb.com',
+  'Redline by Simple Local Web · redline.simplelocalweb.com',
 ].join('\n');

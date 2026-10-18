@@ -2,7 +2,7 @@
 
 > Redline by Simple Local Web is a website feedback tool. Clients open their website in Redline, mark what they want changed right on the page, and every mark lands on Simple Local Web's to-do list, where it gets checked off as the work is done.
 
-Redline runs in the browser at https://feedback.simplelocalweb.com. There is nothing to install. It is made by Simple Local Web (https://simplelocalweb.com), a small web shop for local businesses. Contact: hello@simplelocalweb.com.
+Redline runs in the browser at https://redline.simplelocalweb.com. There is nothing to install. It is made by Simple Local Web (https://simplelocalweb.com), a small web shop for local businesses. Contact: hello@simplelocalweb.com.
 
 Redline is built on the open-source MarkLayer project (https://github.com/thevrus/MarkLayer), licensed Apache-2.0.
 
@@ -16,18 +16,18 @@ Redline is built on the open-source MarkLayer project (https://github.com/thevru
 
 ## Data and retention
 
-Hosted on Cloudflare. Marks, comments and uploaded files are deleted 90 days after the page was last opened; opening or commenting resets that clock. No analytics run on Redline. Details: https://feedback.simplelocalweb.com/privacy
+Hosted on Cloudflare. Marks, comments and uploaded files are deleted 90 days after the page was last opened; opening or commenting resets that clock. No analytics run on Redline. Details: https://redline.simplelocalweb.com/privacy
 
 ## For developers and AI agents
 
-- MCP setup: https://feedback.simplelocalweb.com/mcp (plain text: https://feedback.simplelocalweb.com/mcp.md)
+- MCP setup: https://redline.simplelocalweb.com/mcp (plain text: https://redline.simplelocalweb.com/mcp.md)
 - Every Redline link is a remote MCP server at the link plus /mcp
-- Share API spec: https://feedback.simplelocalweb.com/api/openapi.json
-- Full reference: https://feedback.simplelocalweb.com/llms-full.txt
+- Share API spec: https://redline.simplelocalweb.com/api/openapi.json
+- Full reference: https://redline.simplelocalweb.com/llms-full.txt
 
 ## Pages
 
-- [Home](https://feedback.simplelocalweb.com/)
-- [Help](https://feedback.simplelocalweb.com/support)
-- [Privacy](https://feedback.simplelocalweb.com/privacy)
-- [For developers](https://feedback.simplelocalweb.com/mcp)
+- [Home](https://redline.simplelocalweb.com/)
+- [Help](https://redline.simplelocalweb.com/support)
+- [Privacy](https://redline.simplelocalweb.com/privacy)
+- [For developers](https://redline.simplelocalweb.com/mcp)

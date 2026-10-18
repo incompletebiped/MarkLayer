@@ -17,5 +17,5 @@ export const text = [
   '',
   "If you weren't expecting this, ignore this email. Nothing will happen.",
   '',
-  'Redline by Simple Local Web · feedback.simplelocalweb.com',
+  'Redline by Simple Local Web · redline.simplelocalweb.com',
 ].join('\n');

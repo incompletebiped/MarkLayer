@@ -15,10 +15,10 @@ Usage:
 
 Options:
   --room <url-or-id>   Connect to a specific Redline room at startup. Accepts
-                       a full share URL (https://feedback.simplelocalweb.com/s/abc123)
+                       a full share URL (https://redline.simplelocalweb.com/s/abc123)
                        or a bare id. Otherwise the agent must call marklayer_connect_room.
   --api-base <url>     Override the Redline server base URL
-                       (default https://feedback.simplelocalweb.com).
+                       (default https://redline.simplelocalweb.com).
                        Useful when running against a local dev worker.
   --agent <name>       Identifier shown to humans for this agent. Default: "claude-code".
   --help, -h           Show this help.
@@ -34,7 +34,7 @@ Environment:
 
 function parseArgs(argv: string[]): Args {
   const out: Args = {
-    apiBase: process.env.MARKLAYER_API_BASE ?? 'https://feedback.simplelocalweb.com',
+    apiBase: process.env.MARKLAYER_API_BASE ?? 'https://redline.simplelocalweb.com',
     room: process.env.MARKLAYER_ROOM ?? null,
     agentId: process.env.MARKLAYER_AGENT ?? 'claude-code',
     help: false,

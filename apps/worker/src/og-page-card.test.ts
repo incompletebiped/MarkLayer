@@ -140,7 +140,7 @@ describe('buildPageOgSvg', () => {
 
   it('names the site alone on the root, with no dangling separator', () => {
     const svg = buildPageOgSvg({ heading: 'Annotate any webpage', path: '/' });
-    expect(svg).toContain('feedback.simplelocalweb.com');
+    expect(svg).toContain('redline.simplelocalweb.com');
     expect(svg).not.toContain('·');
   });
 

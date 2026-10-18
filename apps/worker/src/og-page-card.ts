@@ -310,6 +310,6 @@ export function buildPageOgSvg({ heading, path }: PageOgCardParams): string {
 
   ${annotation}
 
-  <text x="${MARK_AXIS}" y="${COLOPHON_BASELINE}" font-family="Geist" font-size="22" letter-spacing="-0.1"><tspan fill="${TONE.ink}" font-weight="500">feedback.simplelocalweb.com</tspan>${trail}</text>
+  <text x="${MARK_AXIS}" y="${COLOPHON_BASELINE}" font-family="Geist" font-size="22" letter-spacing="-0.1"><tspan fill="${TONE.ink}" font-weight="500">redline.simplelocalweb.com</tspan>${trail}</text>
 </svg>`;
 }

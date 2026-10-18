@@ -5,7 +5,7 @@
       "@type": "WebSite",
       "name": "Redline",
       "alternateName": "Redline by Simple Local Web",
-      "url": "https://feedback.simplelocalweb.com",
+      "url": "https://redline.simplelocalweb.com",
       "description": "Mark up your website in red. Circle what needs changing, leave a note, and watch each fix get checked off.",
       "publisher": {
         "@type": "Organization",
@@ -17,12 +17,12 @@
     {
       "@type": "WebApplication",
       "name": "Redline",
-      "url": "https://feedback.simplelocalweb.com",
+      "url": "https://redline.simplelocalweb.com",
       "description": "A website feedback tool from Simple Local Web. Open your site, mark what you want changed right on the page, and every note lands on our list to get done.",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "Any web browser",
       "isAccessibleForFree": true,
-      "screenshot": "https://feedback.simplelocalweb.com/og.jpg",
+      "screenshot": "https://redline.simplelocalweb.com/og.jpg",
       "publisher": {
         "@type": "Organization",
         "name": "Simple Local Web",

@@ -332,7 +332,7 @@ export const TOOLS: ToolSpec[] = [
       properties: {
         room: {
           type: 'string',
-          description: 'Room URL like https://feedback.simplelocalweb.com/s/abc123 or a bare room id like abc123.',
+          description: 'Room URL like https://redline.simplelocalweb.com/s/abc123 or a bare room id like abc123.',
         },
         password: {
           type: 'string',

@@ -15,4 +15,4 @@ Disallow: /s/
 Disallow: /p/
 Disallow: /app
 
-Sitemap: https://feedback.simplelocalweb.com/sitemap.xml
+Sitemap: https://redline.simplelocalweb.com/sitemap.xml

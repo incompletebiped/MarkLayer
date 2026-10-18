@@ -935,7 +935,7 @@ export class AnnotationRoom extends DurableObject<Env> {
     const { sent } = await deliver({
       integrations,
       event: { type: 'annotations.created', items },
-      roomUrl: `${this.origin ?? 'https://feedback.simplelocalweb.com'}/s/${id}`,
+      roomUrl: `${this.origin ?? 'https://redline.simplelocalweb.com'}/s/${id}`,
       pageUrl: this.url,
     });
     // One destination succeeding is enough to say the room is still wired up.
@@ -950,7 +950,7 @@ export class AnnotationRoom extends DurableObject<Env> {
     const tokenKey = this.env.SLACK_TOKEN_KEY;
     if (!tokenKey || this.slackFailures >= 3) return;
 
-    const origin = this.origin ?? 'https://feedback.simplelocalweb.com';
+    const origin = this.origin ?? 'https://redline.simplelocalweb.com';
     const result = await postBatchToSlack({
       db: this.env.DB,
       tokenKey,

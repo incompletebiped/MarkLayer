@@ -4,7 +4,7 @@
 
 Redline by Simple Local Web is a website feedback tool. A client opens their website in Redline, marks what they want changed right on the live page, and every mark lands on Simple Local Web's to-do list. As each one is done it gets checked off, and the client sees that on the same page.
 
-- Web app: https://feedback.simplelocalweb.com
+- Web app: https://redline.simplelocalweb.com
 - Made by: Simple Local Web, https://simplelocalweb.com
 - Contact: hello@simplelocalweb.com
 - Built on: the open-source MarkLayer project, https://github.com/thevrus/MarkLayer (Apache-2.0)
@@ -31,31 +31,31 @@ Anyone with a Redline link can open it. Several people can mark up the same page
 
 ## Data and retention
 
-Redline is hosted on Cloudflare (Workers, D1, Durable Objects, R2). Marks, comments and uploaded files are deleted 90 days after the page was last opened, and opening or commenting resets that clock. A link can also be given an earlier expiry. No analytics run on Redline. Privacy details: https://feedback.simplelocalweb.com/privacy
+Redline is hosted on Cloudflare (Workers, D1, Durable Objects, R2). Marks, comments and uploaded files are deleted 90 days after the page was last opened, and opening or commenting resets that clock. A link can also be given an earlier expiry. No analytics run on Redline. Privacy details: https://redline.simplelocalweb.com/privacy
 
 ## AI Coding Agent Integration (MCP)
 
 Every Redline link is a remote MCP server (Streamable HTTP) at the link plus /mcp, so connecting needs nothing installed:
 
-    claude mcp add --transport http redline https://feedback.simplelocalweb.com/s/abc123/mcp
+    claude mcp add --transport http redline https://redline.simplelocalweb.com/s/abc123/mcp
 
 Add ?agent=<name> to that URL to set the name people see on the agent's work (default: agent). The endpoint is bound to its link, so it serves every tool below except marklayer_connect_room.
 
 For clients that only run local servers, use the upstream stdio package and point it at Redline:
 
-    claude mcp add redline -e MARKLAYER_API_BASE=https://feedback.simplelocalweb.com -- npx -y marklayer-mcp
+    claude mcp add redline -e MARKLAYER_API_BASE=https://redline.simplelocalweb.com -- npx -y marklayer-mcp
 
 Tools: marklayer_connect_room, marklayer_room_info, marklayer_read_page, marklayer_list_annotations, marklayer_get_annotation, marklayer_get_feedback, marklayer_watch_annotations, marklayer_acknowledge, marklayer_resolve, marklayer_dismiss, marklayer_reply, marklayer_create_annotation, marklayer_suggest_edit, marklayer_share_preview, marklayer_set_next_steps, marklayer_complete_next_step, marklayer_ask.
 
 Typical loop: list what is open, watch for new marks, acknowledge each one before starting, make the change, then resolve it with a one-line summary. Dismiss with a reason when it cannot be acted on. approved is the one status an agent never sets: it is the person who asked for the change confirming the fix.
 
-Setup for each client: https://feedback.simplelocalweb.com/mcp (plain text: https://feedback.simplelocalweb.com/mcp.md)
+Setup for each client: https://redline.simplelocalweb.com/mcp (plain text: https://redline.simplelocalweb.com/mcp.md)
 
 ## Programmatic Link Creation
 
 Redline exposes a public HTTP API for minting links. The id you choose is the access token, so make it unguessable.
 
-    POST https://feedback.simplelocalweb.com/api/{id}
+    POST https://redline.simplelocalweb.com/api/{id}
     Content-Type: application/json
 
     { "ops": [], "url": "https://example.com/page", "width": 1440, "expires_in": 2592000 }
@@ -65,12 +65,12 @@ Redline exposes a public HTTP API for minting links. The id you choose is the ac
 - width (optional): reference viewport width in CSS pixels. 1440 is a safe default.
 - expires_in (optional): seconds until cleanup, max 2592000 (30 days). Omit it and the link is deleted 90 days after it was last opened.
 
-The link is then https://feedback.simplelocalweb.com/s/{id}, or https://feedback.simplelocalweb.com/s/{id}?readonly=1 for view only. To make many links, loop the POST with a fresh id per page. Full spec: https://feedback.simplelocalweb.com/api/openapi.json
+The link is then https://redline.simplelocalweb.com/s/{id}, or https://redline.simplelocalweb.com/s/{id}?readonly=1 for view only. To make many links, loop the POST with a fresh id per page. Full spec: https://redline.simplelocalweb.com/api/openapi.json
 
 ## Links
 
-- Home: https://feedback.simplelocalweb.com/
-- Help: https://feedback.simplelocalweb.com/support
-- Privacy: https://feedback.simplelocalweb.com/privacy
-- For developers: https://feedback.simplelocalweb.com/mcp
+- Home: https://redline.simplelocalweb.com/
+- Help: https://redline.simplelocalweb.com/support
+- Privacy: https://redline.simplelocalweb.com/privacy
+- For developers: https://redline.simplelocalweb.com/mcp
 - Simple Local Web: https://simplelocalweb.com

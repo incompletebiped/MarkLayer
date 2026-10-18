@@ -26,10 +26,10 @@ describe('parseRoomRef', () => {
   });
 
   test('takes a share link, with or without its scheme or query', () => {
-    expect(parseRoomRef('https://feedback.simplelocalweb.com/s/abc123')).toBe('abc123');
+    expect(parseRoomRef('https://redline.simplelocalweb.com/s/abc123')).toBe('abc123');
     expect(parseRoomRef('marklayer.app/s/abc123')).toBe('abc123');
-    expect(parseRoomRef('https://feedback.simplelocalweb.com/s/abc123?ref=ext')).toBe('abc123');
-    expect(parseRoomRef('https://feedback.simplelocalweb.com/s/abc123/')).toBe('abc123');
+    expect(parseRoomRef('https://redline.simplelocalweb.com/s/abc123?ref=ext')).toBe('abc123');
+    expect(parseRoomRef('https://redline.simplelocalweb.com/s/abc123/')).toBe('abc123');
   });
 
   // The floor on `isNewShareId` guards minting, not joining, so a short legacy id
@@ -42,7 +42,7 @@ describe('parseRoomRef', () => {
     expect(parseRoomRef('')).toBeNull();
     expect(parseRoomRef('   ')).toBeNull();
     expect(parseRoomRef('has spaces')).toBeNull();
-    expect(parseRoomRef('https://feedback.simplelocalweb.com/guides/how-marklayer-works')).toBeNull();
+    expect(parseRoomRef('https://redline.simplelocalweb.com/guides/how-marklayer-works')).toBeNull();
     expect(parseRoomRef('a'.repeat(65))).toBeNull();
   });
 });
@@ -107,15 +107,15 @@ describe('MCP connect commands', () => {
   // Both surfaces offer these verbatim for copy-paste; a dropped flag or a room
   // id that never reaches the string hands the user a command that just fails.
   test('point at the room’s own endpoint, so nothing has to be installed', () => {
-    expect(mcpEndpoint('room-42')).toBe('https://feedback.simplelocalweb.com/s/room-42/mcp');
+    expect(mcpEndpoint('room-42')).toBe('https://redline.simplelocalweb.com/s/room-42/mcp');
     expect(claudeMcpCommand('room-42')).toBe(
-      'claude mcp add --transport http redline https://feedback.simplelocalweb.com/s/room-42/mcp',
+      'claude mcp add --transport http redline https://redline.simplelocalweb.com/s/room-42/mcp',
     );
   });
 
   test('keep the npx fallback intact, non-interactive flag and all', () => {
     expect(npxMcpCommand('room-42')).toBe(
-      'npx -y marklayer-mcp --room room-42 --api-base https://feedback.simplelocalweb.com',
+      'npx -y marklayer-mcp --room room-42 --api-base https://redline.simplelocalweb.com',
     );
   });
 });
@@ -124,13 +124,13 @@ describe('room identity', () => {
   test('reuses one id across share surfaces so collaborators land on one canvas', () => {
     const first = getRoomId();
     expect(getRoomId()).toBe(first);
-    expect(getShareUrl()).toBe(`https://feedback.simplelocalweb.com/s/${first}?ref=ext`);
+    expect(getShareUrl()).toBe(`https://redline.simplelocalweb.com/s/${first}?ref=ext`);
   });
 
   test('adopting an existing id repoints the share url at it', () => {
     setAnnotationId('adopted-id');
     expect(getRoomId()).toBe('adopted-id');
-    expect(getShareUrl()).toBe('https://feedback.simplelocalweb.com/s/adopted-id?ref=ext');
+    expect(getShareUrl()).toBe('https://redline.simplelocalweb.com/s/adopted-id?ref=ext');
   });
 });
 
@@ -148,30 +148,30 @@ describe('share attribution', () => {
 
   test('keeps the params a share link already carries', () => {
     // A `readonly` dropped here is a view-only link handed out as editable.
-    expect(withShareRef({ url: 'https://feedback.simplelocalweb.com/s/abc?readonly=1', ref: 'web' })).toBe(
-      'https://feedback.simplelocalweb.com/s/abc?readonly=1&ref=web',
+    expect(withShareRef({ url: 'https://redline.simplelocalweb.com/s/abc?readonly=1', ref: 'web' })).toBe(
+      'https://redline.simplelocalweb.com/s/abc?readonly=1&ref=web',
     );
-    expect(withShareRef({ url: 'https://feedback.simplelocalweb.com/p/xyz?page=2', ref: 'dash' })).toBe(
-      'https://feedback.simplelocalweb.com/p/xyz?page=2&ref=dash',
+    expect(withShareRef({ url: 'https://redline.simplelocalweb.com/p/xyz?page=2', ref: 'dash' })).toBe(
+      'https://redline.simplelocalweb.com/p/xyz?page=2&ref=dash',
     );
   });
 
   test('replaces an existing ref rather than appending a second', () => {
     // Re-sharing a link that arrived from somewhere else credits the surface it
     // is leaving from now, not the one it came in on.
-    expect(withShareRef({ url: 'https://feedback.simplelocalweb.com/s/abc?ref=ext', ref: 'web' })).toBe(
-      'https://feedback.simplelocalweb.com/s/abc?ref=web',
+    expect(withShareRef({ url: 'https://redline.simplelocalweb.com/s/abc?ref=ext', ref: 'web' })).toBe(
+      'https://redline.simplelocalweb.com/s/abc?ref=web',
     );
   });
 });
 
 describe('shareUrl', () => {
   test('routes a project to /p and a page to /s', () => {
-    expect(shareUrl({ origin: 'https://feedback.simplelocalweb.com', kind: 'project', id: 'xyz', ref: 'web' })).toBe(
-      'https://feedback.simplelocalweb.com/p/xyz?ref=web',
+    expect(shareUrl({ origin: 'https://redline.simplelocalweb.com', kind: 'project', id: 'xyz', ref: 'web' })).toBe(
+      'https://redline.simplelocalweb.com/p/xyz?ref=web',
     );
-    expect(shareUrl({ origin: 'https://feedback.simplelocalweb.com', kind: 'page', id: 'abc', ref: 'dash' })).toBe(
-      'https://feedback.simplelocalweb.com/s/abc?ref=dash',
+    expect(shareUrl({ origin: 'https://redline.simplelocalweb.com', kind: 'page', id: 'abc', ref: 'dash' })).toBe(
+      'https://redline.simplelocalweb.com/s/abc?ref=dash',
     );
   });
 
@@ -179,8 +179,8 @@ describe('shareUrl', () => {
   // lost between them hands out a view-only link as editable.
   test('carries readonly through alongside the ref', () => {
     expect(
-      shareUrl({ origin: 'https://feedback.simplelocalweb.com', kind: 'page', id: 'abc', readonly: true, ref: 'web' }),
-    ).toBe('https://feedback.simplelocalweb.com/s/abc?readonly=1&ref=web');
+      shareUrl({ origin: 'https://redline.simplelocalweb.com', kind: 'page', id: 'abc', readonly: true, ref: 'web' }),
+    ).toBe('https://redline.simplelocalweb.com/s/abc?readonly=1&ref=web');
   });
 });
 
@@ -262,7 +262,7 @@ describe('saveAnnotations and loadAnnotations', () => {
       },
     );
 
-    expect(calls[0]?.url).toBe(`https://feedback.simplelocalweb.com/api/${id}`);
+    expect(calls[0]?.url).toBe(`https://redline.simplelocalweb.com/api/${id}`);
     expect(calls[0]?.init?.method).toBe('POST');
     const sent: unknown = JSON.parse(String(calls[0]?.init?.body));
     expect(sent).toMatchObject({ ops: [op], url: 'https://example.com/page', width: window.innerWidth });

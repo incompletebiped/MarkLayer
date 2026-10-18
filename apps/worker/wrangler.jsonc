@@ -4,7 +4,7 @@
   "compatibility_date": "2025-03-01",
   // Custom Domain: `wrangler deploy` creates the proxied DNS record and the
   // certificate. Don't add a DNS record by hand first — it blocks the attach.
-  "routes": [{ "pattern": "feedback.simplelocalweb.com", "custom_domain": true }],
+  "routes": [{ "pattern": "redline.simplelocalweb.com", "custom_domain": true }],
   "observability": {
     "enabled": true,
     "logs": {

@@ -484,7 +484,7 @@ const securityTxt = once(() => {
   return `Contact: mailto:hello@simplelocalweb.com
 Expires: ${expires}
 Preferred-Languages: en
-Canonical: https://feedback.simplelocalweb.com/.well-known/security.txt
+Canonical: https://redline.simplelocalweb.com/.well-known/security.txt
 `;
 });
 

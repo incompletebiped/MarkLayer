@@ -6,7 +6,7 @@ license: Apache-2.0
 
 # Working with Redline annotations
 
-Redline (https://feedback.simplelocalweb.com) is Simple Local Web's website
+Redline (https://redline.simplelocalweb.com) is Simple Local Web's website
 feedback tool, built on the open-source MarkLayer project. People draw, comment
 and mark up a page; each page is a "room" addressed by an unguessable id. There are two ways an agent works with it.
 
@@ -15,7 +15,7 @@ and mark up a page; each page is a "room" addressed by an unguessable id. There 
 The id you POST to **is** the access token, so pick any unguessable string
 (nanoid/uuid). No account, key, or SDK required.
 
-    POST https://feedback.simplelocalweb.com/api/{id}
+    POST https://redline.simplelocalweb.com/api/{id}
     Content-Type: application/json
     { "ops": [], "url": "https://example.com/page", "width": 1440, "expires_in": 2592000 }
 
@@ -25,24 +25,24 @@ The id you POST to **is** the access token, so pick any unguessable string
 - `expires_in`: seconds until cleanup (max 2592000 = 30 days). Omit for no fixed expiry — the link
   is deleted 90 days after its last access, and any view or comment resets that clock.
 
-The share link is then `https://feedback.simplelocalweb.com/s/{id}`. To mint many at once,
+The share link is then `https://redline.simplelocalweb.com/s/{id}`. To mint many at once,
 loop the POST with a fresh id per URL. Full machine-readable spec:
-https://feedback.simplelocalweb.com/api/openapi.json (also listed in
-https://feedback.simplelocalweb.com/.well-known/api-catalog).
+https://redline.simplelocalweb.com/api/openapi.json (also listed in
+https://redline.simplelocalweb.com/.well-known/api-catalog).
 
 ## 2. Process annotations as a work queue (MCP)
 
 Every share link is also a remote MCP server at the same address plus `/mcp`,
 so you can connect with nothing installed:
 
-    claude mcp add --transport http redline https://feedback.simplelocalweb.com/s/{id}/mcp
+    claude mcp add --transport http redline https://redline.simplelocalweb.com/s/{id}/mcp
 
 Append `?agent=<your-name>` so the humans see who is working. That endpoint is
 bound to its room: skip step 1 below, because `marklayer_connect_room` is the one
 tool it does not have. If your client only runs local servers, install the stdio
 package instead:
 
-    claude mcp add redline -e MARKLAYER_API_BASE=https://feedback.simplelocalweb.com -- npx -y marklayer-mcp
+    claude mcp add redline -e MARKLAYER_API_BASE=https://redline.simplelocalweb.com -- npx -y marklayer-mcp
 
 A room's `url` is not always a webpage. It can be a PDF or an image, either a
 link to one or a file someone uploaded, served from `/f/{id}`. Annotations on

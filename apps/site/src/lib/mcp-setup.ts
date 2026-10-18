@@ -74,7 +74,7 @@ export const MCP_CLIENTS: McpClient[] = [
 /** What to paste into CLAUDE.md or AGENTS.md so the agent reaches for Redline on its own. */
 export const MCP_HABIT = `## Visual review
 
-When I share a feedback.simplelocalweb.com/s/... link, connect to it over MCP and work the
+When I share a redline.simplelocalweb.com/s/... link, connect to it over MCP and work the
 annotations: acknowledge each one before you start, resolve it with a one-line
 summary of what changed, and dismiss it with a reason if you cannot act on it.
 

@@ -1,6 +1,6 @@
 # marklayer-mcp
 
-MCP (Model Context Protocol) server that bridges [Redline](https://feedback.simplelocalweb.com) annotations to AI coding agents. Redline is made by [Simple Local Web](https://simplelocalweb.com).
+MCP (Model Context Protocol) server that bridges [Redline](https://redline.simplelocalweb.com) annotations to AI coding agents. Redline is made by [Simple Local Web](https://simplelocalweb.com).
 
 When users annotate any webpage with Redline, your agent receives the comments as a structured work queue: it can acknowledge, resolve, dismiss, and reply to each one — and the human sees the status updates live. It also works the other way: point an agent at a room and ask it to review the page, and it can leave its own comments and copy-edit suggestions for the human to triage.
 
@@ -9,7 +9,7 @@ When users annotate any webpage with Redline, your agent receives the comments a
 You may not need to. Every Redline share link is already a remote MCP server at the same address plus `/mcp`, so a client that supports remote (Streamable HTTP) servers connects with nothing installed:
 
 ```bash
-claude mcp add --transport http redline https://feedback.simplelocalweb.com/s/abc123/mcp
+claude mcp add --transport http redline https://redline.simplelocalweb.com/s/abc123/mcp
 ```
 
 Append `?agent=cursor`, or any name, so the people in the room see who is working; it defaults to `agent`. That endpoint is bound to its room, so it has every tool below except `marklayer_connect_room`.
@@ -18,10 +18,10 @@ This package is the stdio version of the same tools, with no Claude-specific wir
 
 ```bash
 # Claude Code:
-claude mcp add redline -- npx -y marklayer-mcp --api-base https://feedback.simplelocalweb.com
+claude mcp add redline -- npx -y marklayer-mcp --api-base https://redline.simplelocalweb.com
 
 # Or pre-connect to a specific room:
-claude mcp add redline -- npx -y marklayer-mcp --api-base https://feedback.simplelocalweb.com --room https://feedback.simplelocalweb.com/s/abc123
+claude mcp add redline -- npx -y marklayer-mcp --api-base https://redline.simplelocalweb.com --room https://redline.simplelocalweb.com/s/abc123
 ```
 
 Pass `--api-base` (or `MARKLAYER_API_BASE`) explicitly: it is the server the tools talk to, and a copy of the package built from another source may default elsewhere.
@@ -34,7 +34,7 @@ For any other MCP client, add a stdio server entry pointing at the same command 
     "redline": {
       "command": "npx",
       "args": ["-y", "marklayer-mcp"],
-      "env": { "MARKLAYER_API_BASE": "https://feedback.simplelocalweb.com", "MARKLAYER_AGENT": "cursor" }
+      "env": { "MARKLAYER_API_BASE": "https://redline.simplelocalweb.com", "MARKLAYER_AGENT": "cursor" }
     }
   }
 }
@@ -76,7 +76,7 @@ The agent will call `marklayer_watch_annotations` in a loop and process incoming
 
 ```
 --room <url-or-id>   Connect at startup; otherwise call marklayer_connect_room.
---api-base <url>     Override the server URL (default https://feedback.simplelocalweb.com).
+--api-base <url>     Override the server URL (default https://redline.simplelocalweb.com).
 --agent <name>       Identifier shown to humans (default "claude-code").
 ```
 
@@ -98,12 +98,12 @@ open by a Durable Object and a long-idle agent can be disconnected. Call
 This server *consumes* an existing share link. To *mint* one (or many) from code — e.g. seed a room per page in a batch of URLs before pointing the agent at it — POST directly to the public HTTP API:
 
 ```bash
-curl -X POST https://feedback.simplelocalweb.com/api/$ID \
+curl -X POST https://redline.simplelocalweb.com/api/$ID \
   -H 'Content-Type: application/json' \
   -d '{"ops":[],"url":"https://example.com/page-1","width":1440,"expires_in":2592000}'
-# Share link: https://feedback.simplelocalweb.com/s/$ID
+# Share link: https://redline.simplelocalweb.com/s/$ID
 ```
 
 For a review room on a preview build, `POST /api/$ID/preview` takes `{ url, title, repo?, branch?, sha?, note?, questions?, previous? }` and never overwrites an existing id. Versions chain only through `previous`, a room you already hold: two rooms are never linked by repo and branch alone, because the version switcher shows each room's neighbours. `marklayer_share_preview` calls this route over stdio; over HTTP (`/s/:id/mcp`) it creates the room in the Worker, chains from the room in the URL, and returns an `mcpUrl` to reconnect to, since that endpoint stays bound to its own room.
 
-`$ID` is caller-supplied (use `nanoid` / `crypto.randomUUID()` — it's the access token). No auth, no SDK. Full details: https://feedback.simplelocalweb.com/llms-full.txt
+`$ID` is caller-supplied (use `nanoid` / `crypto.randomUUID()` — it's the access token). No auth, no SDK. Full details: https://redline.simplelocalweb.com/llms-full.txt

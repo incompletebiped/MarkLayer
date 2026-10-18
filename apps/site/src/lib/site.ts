@@ -1,4 +1,4 @@
-export const ORIGIN = 'https://feedback.simplelocalweb.com';
+export const ORIGIN = 'https://redline.simplelocalweb.com';
 /** Upstream's store listing. The site no longer links it; apps/worker still imports it. */
 export const CHROME_STORE_URL = 'https://chromewebstore.google.com/detail/marklayer/fnfobegjifomgobgilaemihpcpidjamc';
 /** The fallback card, for anything with no heading of its own to draw. */
