@@ -11,6 +11,7 @@ import {
   cn,
   commentMetaSchema,
   commentOpSchema,
+  countOpen,
   type DrawOp,
   deletionDeadline,
   effectiveExpiresAt,
@@ -114,6 +115,22 @@ describe('applyOpPatch', () => {
     expect(once).not.toBeNull();
     if (!once) return;
     expect(applyOpPatch({ op: once, patch: { status: 'resolved', priority: 'high' } })).toEqual(once);
+  });
+});
+
+describe('countOpen', () => {
+  const base = { tool: 'comment', num: 1, text: 't', x: 0, y: 0, ts: 0, color: '#c8372d', lineWidth: 2 } as const;
+  test('counts root threads still waiting, and nothing else', () => {
+    const ops = [
+      { ...base, id: 'open' },
+      { ...base, id: 'working', status: 'in_progress' as const },
+      { ...base, id: 'done', status: 'resolved' as const },
+      { ...base, id: 'legacy-done', resolved: true },
+      { ...base, id: 'approved', status: 'approved' as const },
+      { ...base, id: 'dismissed', status: 'dismissed' as const },
+      { ...base, id: 'reply', parentId: 'open' },
+    ];
+    expect(countOpen(ops)).toBe(2);
   });
 });
 

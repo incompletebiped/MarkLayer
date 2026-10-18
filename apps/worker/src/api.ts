@@ -10,6 +10,7 @@ import {
   opsArraySchema,
 } from '@marklayer/types';
 import type { Context } from 'hono';
+import { setCookie } from 'hono/cookie';
 import { cors } from 'hono/cors';
 import { userFromCookieHeader } from './auth';
 import { ownedStore } from './auth/store';
@@ -26,7 +27,7 @@ import {
 } from './integrations/deliver';
 import { providerById, providerList } from './integrations/providers';
 import { notifiableFrom } from './integrations/types';
-import { lockedError, lockedPages, roomAccess } from './lock/gate';
+import { lockedError, lockedPages, roomAccess, unlockCookie } from './lock/gate';
 import { captureServer } from './posthog';
 import { createPreviewRoom } from './preview';
 import { annotationStore, isExpired, projectStore } from './store';
@@ -339,6 +340,7 @@ api.openapi(storeAnnotation, async (c) => {
 
   const store = annotationStore(c.env.DB);
   const current = await store.getAccess(id);
+  const from = Array.isArray(body) ? undefined : body.from;
   // No row yet means this write would mint the room: the team may, and so may a
   // page opened from inside a room on the same site.
   // Resolved only for a create: an update never needs to know who is asking.
@@ -346,12 +348,7 @@ api.openapi(storeAnnotation, async (c) => {
   if (
     !current &&
     !mayStartBoards({ env: c.env, email: creator?.email }) &&
-    !(await sameSiteAs({
-      db: c.env.DB,
-      from: Array.isArray(body) ? undefined : body.from,
-      url,
-      headers: c.req.raw.headers,
-    }))
+    !(await sameSiteAs({ db: c.env.DB, from, url, headers: c.req.raw.headers }))
   ) {
     return c.json({ error: TEAM_ONLY }, 403);
   }
@@ -374,9 +371,27 @@ api.openapi(storeAnnotation, async (c) => {
   if (!(await store.put({ id, ops: result.data, url, width, expiresAt }))) {
     return c.json({ error: WEAK_NEW_ID }, 400);
   }
-  // A board someone signed in starts is theirs from the first write, so it is on
-  // their dashboard without a separate "Save to my links".
-  if (creator) await ownedStore(c.env.DB).claimAnnotation({ id, ownerId: creator.id });
+  if (!current) {
+    // A page opened from inside a room joins that room's site: same owner, same
+    // password and rules. Only from a room the caller can open, and then the
+    // unlock carries over too, so a client browsing a protected site is asked once.
+    if (from && (await roomAccess({ db: c.env.DB, id: from, headers: c.req.raw.headers })).open) {
+      await store.inheritSettings({ id, from });
+      const lock = await store.getLock(id);
+      if (lock?.passwordHash) {
+        const cookie = await unlockCookie({
+          roomId: id,
+          gen: lock.passwordGen,
+          record: lock.passwordHash,
+          secure: new URL(c.req.url).protocol === 'https:',
+        });
+        setCookie(c, cookie.name, cookie.value, cookie.options);
+      }
+    }
+    // A board someone signed in starts is theirs from the first write, so it is
+    // on their dashboard without a separate "Save to my links".
+    if (creator) await ownedStore(c.env.DB).claimAnnotation({ id, ownerId: creator.id });
+  }
 
   // The web app autosaves a bare ops array every few seconds (useRealtimeSync);
   // the extension and API callers send the object form only when someone

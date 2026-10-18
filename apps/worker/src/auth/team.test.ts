@@ -105,8 +105,11 @@ describe('POST /{id} with the team gate on', () => {
     });
     expect(res.status).toBe(200);
     expect(inserted(db)).toBe(true);
-    // Nobody signed in, so nobody to own it.
-    expect(db.calls.some((call) => call.sql.includes('SET owner_id'))).toBe(false);
+    // It joins the room's site: owner and rules copied from the room it was opened from,
+    const inherit = db.calls.find((call) => call.sql.includes('SET owner_id = (SELECT owner_id'));
+    expect(inherit?.bindings).toEqual([ID, 'roomA']);
+    // and nobody signed in claims it on top.
+    expect(db.calls.some((call) => call.sql.includes('AND owner_id IS NULL'))).toBe(false);
   });
 
   test('refuses a page on another site, even from inside a room', async () => {

@@ -89,12 +89,16 @@ const CONFIRM_LAST = 'mx-0 -mr-1.5';
 const ROW_CTL = 'size-11 sm:size-7';
 
 /** Copy, and say so: the flash is the confirmation, and a failed write toasts instead. */
-function CopyButton({ id }: { id: string }) {
+function CopyButton({ link }: { link: OwnedLink }) {
   const { copied, copy } = useCopyToClipboard({ resetMs: 1600 });
+  // A site is shared as the site, so the client gets every page from the one link.
+  const target = link.site
+    ? { kind: 'project' as const, id: link.site.projectId }
+    : { kind: 'page' as const, id: link.id };
   return (
     <CopyControl
       copied={copied.value}
-      onClick={() => copy(shareUrl({ origin: location.origin, kind: 'page', id, ref: 'dash' }))}
+      onClick={() => copy(shareUrl({ origin: location.origin, ...target, ref: 'dash' }))}
       size={14}
       strokeWidth={1.5}
       class={cn(geist.ctlSm, ROW_CTL)}
@@ -107,7 +111,8 @@ function LinkRow({ link }: { link: OwnedLink }) {
   // by convention; this makes it structural.
   const mode = useSignal<'idle' | 'confirming' | 'settings'>('idle');
   const left = daysLeft(link);
-  const path = pathOf(link.url);
+  // A site row names the site; one page's path would misdescribe it.
+  const path = link.site ? '' : pathOf(link.url);
   return (
     <li class="px-4 py-3.5 transition-colors duration-150 hover:bg-(--ds-gray-alpha-100)">
       {/* `group` sits on the title row, not the <li>: hovering a toggle in the
@@ -118,7 +123,7 @@ function LinkRow({ link }: { link: OwnedLink }) {
               why the actions beside it are positioned: later in the DOM and also
               positioned, so they stack above the overlay without a z-index. */}
           <a
-            href={`/s/${link.id}`}
+            href={link.site ? `/p/${link.site.projectId}` : `/s/${link.id}`}
             class="text-ui tracking-ui block truncate font-medium text-(--ds-gray-1000) no-underline after:absolute after:inset-0 group-hover:underline"
           >
             {hostOf(link.url)}
@@ -128,6 +133,24 @@ function LinkRow({ link }: { link: OwnedLink }) {
               gives the title the ellipsis, and an expiry cut to "in 89 da…" is
               the one number on the line worth reading. */}
           <p class="text-meta mt-1 text-(--ds-gray-900) sm:truncate">
+            {link.site && (
+              <>
+                <span class="tabular-nums whitespace-nowrap">
+                  {link.site.pageCount} {link.site.pageCount === 1 ? 'page' : 'pages'}
+                </span>
+                <span class="px-1.5" aria-hidden="true">
+                  ·
+                </span>
+                <span
+                  class={cn('tabular-nums whitespace-nowrap', link.site.openCount > 0 && 'font-medium text-ml-mark')}
+                >
+                  {link.site.openCount === 0 ? 'All done' : `${link.site.openCount} open`}
+                </span>
+                <span class="px-1.5" aria-hidden="true">
+                  ·
+                </span>
+              </>
+            )}
             <span class="tabular-nums whitespace-nowrap">Opened {whenText(link.lastAccessedAt)}</span>
             <span class="px-1.5" aria-hidden="true">
               ·
@@ -161,7 +184,7 @@ function LinkRow({ link }: { link: OwnedLink }) {
             </>
           ) : (
             <>
-              <CopyButton id={link.id} />
+              <CopyButton link={link} />
               <MoveMenu link={link} class={cn(geist.ctlSm, geist.ctlIdle, ROW_CTL)} />
               <button
                 type="button"

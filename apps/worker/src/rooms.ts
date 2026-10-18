@@ -56,13 +56,16 @@ rooms.post('/s/:id/unlock', csrf(), async (c) => {
   });
   if (attempt !== 'ok') return unlockPage({ roomId: id, returnTo, reason: attempt });
 
-  const cookie = await unlockCookie({
-    roomId: id,
-    gen: lock.passwordGen,
-    record: lock.passwordHash,
-    secure: new URL(c.req.url).protocol === 'https:',
-  });
-  setCookie(c, cookie.name, cookie.value, cookie.options);
+  // The other pages of the site that share this exact password record open with
+  // it, so a protected site asks once rather than on every page.
+  const site = (await projectStore(c.env.DB).containing([id])).get(id);
+  const rooms = site ? await annotationStore(c.env.DB).getLocks(site.pageIds) : new Map([[id, lock]]);
+  const secure = new URL(c.req.url).protocol === 'https:';
+  for (const [roomId, room] of rooms) {
+    if (room.passwordHash !== lock.passwordHash) continue;
+    const cookie = await unlockCookie({ roomId, gen: room.passwordGen, record: lock.passwordHash, secure });
+    setCookie(c, cookie.name, cookie.value, cookie.options);
+  }
   // 303 so a refresh does not resubmit the password.
   return c.redirect(returnTo, 303);
 });

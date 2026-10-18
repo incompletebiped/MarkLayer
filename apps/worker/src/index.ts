@@ -151,6 +151,17 @@ app.get('/s/:id', async (c) => {
 
   const access = await roomAccess({ db: c.env.DB, id: annotationId, headers: c.req.raw.headers });
   if (!access.open) return unlockPage({ roomId: annotationId, returnTo: `/s/${annotationId}`, reason: access.reason });
+
+  // A page of a site opens as the site, so whichever page's link someone holds,
+  // they land on the whole board with every page and comment in it.
+  const site = (await projectStore(c.env.DB).containing([annotationId])).get(annotationId);
+  if (site) {
+    const to = new URL(`/p/${site.projectId}`, reqUrl);
+    for (const [key, value] of reqUrl.searchParams) to.searchParams.set(key, value);
+    const page = site.pageIds.indexOf(annotationId);
+    if (page > 0) to.searchParams.set('page', String(page));
+    return c.redirect(`${to.pathname}${to.search}`, 302);
+  }
   // Unlocked, but the tags below are what a link preview caches and reposts, so they stay generic.
   if (access.guarded) {
     const shell = await c.env.ASSETS.fetch(new Request(new URL('/', reqUrl)));

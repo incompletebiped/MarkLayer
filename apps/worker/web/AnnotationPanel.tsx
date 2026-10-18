@@ -48,6 +48,7 @@ import { capture } from './analytics';
 import { type AnnotationItem, itemAnchor, itemLabel } from './annotationItems';
 import { IntroComposerSlot, IntroVideo, introComposerOpen, intros } from './IntroVideo';
 import { ReviewSection } from './ReviewPanel';
+import { panelScope, ScopeToggle, SiteComments } from './SiteComments';
 import { DEVICE_ICONS, DEVICE_LABELS, menuItem } from './shared';
 import { fileUrl, isReadonly, showBoard } from './signals';
 
@@ -547,169 +548,180 @@ function AnnotationPanelView({ onScrollTo, getExportData }: BodyProps) {
         {/* One filter is no filter: with a single status in the room "All" and
             that status are two views of one list, so the control only earns its
             place from two statuses up. */}
-        {filters.length > 2 && (
+        {filters.length > 2 && panelScope.value === 'page' && (
           <div class="mt-3">
             <StatusFilterMenu filters={filters} active={filter} />
           </div>
         )}
+        <ScopeToggle />
       </div>
 
-      {/* List */}
-      <div class="flex-1 overflow-y-auto overscroll-contain">
-        <IntroVideo />
-        <ReviewSection />
-        {/* A filtered-out list is not an empty room. Saying "no comments yet" over
+      {/* List: this page's, or every page's when the header switch says so. */}
+      {panelScope.value === 'site' ? (
+        <SiteComments />
+      ) : (
+        <div class="flex-1 overflow-y-auto overscroll-contain">
+          <IntroVideo />
+          <ReviewSection />
+          {/* A filtered-out list is not an empty room. Saying "no comments yet" over
             a room that has them, with no way back, is the panel lying to itself. */}
-        {items.length === 0 && (
-          <div class="flex flex-col items-center justify-center h-44 gap-2 px-6 text-center">
-            <MessageSquare size={24} strokeWidth={1.5} class="text-(--ds-gray-700)" aria-hidden="true" />
-            {filter === 'all' ? (
-              <>
-                <span class="text-ui font-medium text-(--ds-gray-1000)">No comments yet</span>
-                <span class="text-meta text-(--ds-gray-900) leading-snug">Use the comment tool (C) to add one</span>
-              </>
-            ) : (
-              <>
-                <span class="text-ui font-medium text-(--ds-gray-1000)">
-                  Nothing {STATUS_LABELS[filter].toLowerCase()}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => (commentFilter.value = 'all')}
-                  class={cn(geist.bareBtn, geist.bareBtnQuiet, 'font-medium underline underline-offset-2')}
-                >
-                  Show all {threadCount} threads
-                </button>
-              </>
-            )}
-          </div>
-        )}
+          {items.length === 0 && (
+            <div class="flex flex-col items-center justify-center h-44 gap-2 px-6 text-center">
+              <MessageSquare size={24} strokeWidth={1.5} class="text-(--ds-gray-700)" aria-hidden="true" />
+              {filter === 'all' ? (
+                <>
+                  <span class="text-ui font-medium text-(--ds-gray-1000)">No comments yet</span>
+                  <span class="text-meta text-(--ds-gray-900) leading-snug">Use the comment tool (C) to add one</span>
+                </>
+              ) : (
+                <>
+                  <span class="text-ui font-medium text-(--ds-gray-1000)">
+                    Nothing {STATUS_LABELS[filter].toLowerCase()}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => (commentFilter.value = 'all')}
+                    class={cn(geist.bareBtn, geist.bareBtnQuiet, 'font-medium underline underline-offset-2')}
+                  >
+                    Show all {threadCount} threads
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
-        {items.map((item) => {
-          if (item.kind === 'comment') {
-            return <CommentRow key={item.op.id} op={item.op} onOpen={() => open(item)} />;
-          }
+          {items.map((item) => {
+            if (item.kind === 'comment') {
+              return <CommentRow key={item.op.id} op={item.op} onOpen={() => open(item)} />;
+            }
 
-          if (item.kind === 'area') {
+            if (item.kind === 'area') {
+              const { op } = item;
+              const w = Math.abs(op.endX - op.startX);
+              const h = Math.abs(op.endY - op.startY);
+              const areaResolved = op.status === 'resolved';
+              return (
+                <div key={op.id} class="group relative border-b border-(--ds-gray-alpha-400)">
+                  <button type="button" class={actionRowButton} onClick={() => open(item)}>
+                    <div class="flex items-center gap-2 h-5 mb-1">
+                      <BoxSelect
+                        size={12}
+                        strokeWidth={1.5}
+                        color={areaResolved ? 'var(--ds-gray-700)' : op.color}
+                        aria-hidden="true"
+                      />
+                      <span class="text-meta text-(--ds-gray-900) font-medium flex-1">Area</span>
+                      <span class={rowMeta}>
+                        <DeviceBadge device={op.device} />
+                        {areaResolved && <StatusBadge status="resolved" />}
+                      </span>
+                    </div>
+                    {op.comment ? (
+                      <p
+                        class="text-meta text-(--ds-gray-1000) m-0 line-clamp-2 leading-relaxed"
+                        style={{
+                          textDecoration: areaResolved ? 'line-through' : 'none',
+                          opacity: areaResolved ? 0.5 : 1,
+                        }}
+                      >
+                        <MentionText text={op.comment} mentions={op.mentions} />
+                      </p>
+                    ) : (
+                      <p class="text-meta text-(--ds-gray-900) m-0">No comment</p>
+                    )}
+                    <p class="text-meta text-(--ds-gray-900) m-0 mt-1 tabular-nums">
+                      {Math.round(w)} × {Math.round(h)} px
+                    </p>
+                  </button>
+                  <QuickAction
+                    label={areaResolved ? 'Reopen' : 'Resolve'}
+                    onClick={() => setOpStatus(op.id, areaResolved ? 'open' : 'resolved')}
+                  />
+                </div>
+              );
+            }
+
+            if (item.kind === 'selection') {
+              const { op } = item;
+              const selStatus = getCommentStatus(op);
+              const selResolved = selStatus === 'resolved' || selStatus === 'dismissed';
+              const selReplies = getReplies(op.id);
+              const SelIcon = op.suggestion ? Replace : TextSelect;
+              return (
+                <div key={op.id} class="group relative border-b border-(--ds-gray-alpha-400)">
+                  <button type="button" class={actionRowButton} onClick={() => open(item)}>
+                    <div class="flex items-center gap-2 h-5 mb-1">
+                      <SelIcon
+                        size={12}
+                        strokeWidth={1.5}
+                        color={selResolved ? 'var(--ds-gray-700)' : op.color}
+                        aria-hidden="true"
+                      />
+                      <span class="text-meta text-(--ds-gray-1000) font-semibold flex-1 truncate">
+                        {op.author || 'Anonymous'}
+                      </span>
+                      <span class={rowMeta}>
+                        {op.priority && <PriorityBadge priority={op.priority} />}
+                        <DeviceBadge device={op.device} />
+                        {selStatus !== 'open' && <StatusBadge status={selStatus} />}
+                        <ReplyCount n={selReplies.length} />
+                        <span class="text-meta text-(--ds-gray-900) tabular-nums">{timeAgo(op.ts)}</span>
+                      </span>
+                    </div>
+                    {op.suggestion ? (
+                      <SuggestionDiff text={op.text} suggestion={op.suggestion} resolved={selResolved} />
+                    ) : (
+                      <p
+                        class="text-meta text-(--ds-gray-900) m-0 line-clamp-2 leading-relaxed"
+                        style={{
+                          textDecoration: selResolved ? 'line-through' : 'none',
+                          opacity: selResolved ? 0.5 : 1,
+                        }}
+                      >
+                        "{op.text}"
+                      </p>
+                    )}
+                    {op.comment && (
+                      <p
+                        class="text-ui text-(--ds-gray-1000) leading-relaxed m-0 mt-1 line-clamp-2"
+                        style={{
+                          textDecoration: selResolved ? 'line-through' : 'none',
+                          opacity: selResolved ? 0.5 : 1,
+                        }}
+                      >
+                        <MentionText text={op.comment} mentions={op.mentions} />
+                      </p>
+                    )}
+                  </button>
+                  <QuickAction
+                    label={STATUS_ACTIONS[selStatus]}
+                    onClick={() => setOpStatus(op.id, STATUS_CYCLE[selStatus])}
+                  />
+                </div>
+              );
+            }
+
             const { op } = item;
-            const w = Math.abs(op.endX - op.startX);
-            const h = Math.abs(op.endY - op.startY);
-            const areaResolved = op.status === 'resolved';
             return (
-              <div key={op.id} class="group relative border-b border-(--ds-gray-alpha-400)">
-                <button type="button" class={actionRowButton} onClick={() => open(item)}>
-                  <div class="flex items-center gap-2 h-5 mb-1">
-                    <BoxSelect
-                      size={12}
-                      strokeWidth={1.5}
-                      color={areaResolved ? 'var(--ds-gray-700)' : op.color}
-                      aria-hidden="true"
-                    />
-                    <span class="text-meta text-(--ds-gray-900) font-medium flex-1">Area</span>
-                    <span class={rowMeta}>
-                      <DeviceBadge device={op.device} />
-                      {areaResolved && <StatusBadge status="resolved" />}
-                    </span>
-                  </div>
-                  {op.comment ? (
-                    <p
-                      class="text-meta text-(--ds-gray-1000) m-0 line-clamp-2 leading-relaxed"
-                      style={{
-                        textDecoration: areaResolved ? 'line-through' : 'none',
-                        opacity: areaResolved ? 0.5 : 1,
-                      }}
-                    >
-                      <MentionText text={op.comment} mentions={op.mentions} />
-                    </p>
-                  ) : (
-                    <p class="text-meta text-(--ds-gray-900) m-0">No comment</p>
-                  )}
-                  <p class="text-meta text-(--ds-gray-900) m-0 mt-1 tabular-nums">
-                    {Math.round(w)} × {Math.round(h)} px
-                  </p>
-                </button>
-                <QuickAction
-                  label={areaResolved ? 'Reopen' : 'Resolve'}
-                  onClick={() => setOpStatus(op.id, areaResolved ? 'open' : 'resolved')}
-                />
-              </div>
+              <button
+                key={op.id}
+                type="button"
+                class={cn(rowButton, 'border-b border-solid border-x-0 border-t-0 border-(--ds-gray-alpha-400)')}
+                onClick={() => open(item)}
+              >
+                <div class="flex items-center gap-2 h-5 mb-1">
+                  <Type size={12} strokeWidth={1.5} color={op.color} aria-hidden="true" />
+                  <span class="text-meta text-(--ds-gray-900) font-medium flex-1">Text</span>
+                  <DeviceBadge device={op.device} />
+                </div>
+                <p class="text-meta m-0 line-clamp-2 leading-relaxed" style={{ color: op.color }}>
+                  {op.text}
+                </p>
+              </button>
             );
-          }
-
-          if (item.kind === 'selection') {
-            const { op } = item;
-            const selStatus = getCommentStatus(op);
-            const selResolved = selStatus === 'resolved' || selStatus === 'dismissed';
-            const selReplies = getReplies(op.id);
-            const SelIcon = op.suggestion ? Replace : TextSelect;
-            return (
-              <div key={op.id} class="group relative border-b border-(--ds-gray-alpha-400)">
-                <button type="button" class={actionRowButton} onClick={() => open(item)}>
-                  <div class="flex items-center gap-2 h-5 mb-1">
-                    <SelIcon
-                      size={12}
-                      strokeWidth={1.5}
-                      color={selResolved ? 'var(--ds-gray-700)' : op.color}
-                      aria-hidden="true"
-                    />
-                    <span class="text-meta text-(--ds-gray-1000) font-semibold flex-1 truncate">
-                      {op.author || 'Anonymous'}
-                    </span>
-                    <span class={rowMeta}>
-                      {op.priority && <PriorityBadge priority={op.priority} />}
-                      <DeviceBadge device={op.device} />
-                      {selStatus !== 'open' && <StatusBadge status={selStatus} />}
-                      <ReplyCount n={selReplies.length} />
-                      <span class="text-meta text-(--ds-gray-900) tabular-nums">{timeAgo(op.ts)}</span>
-                    </span>
-                  </div>
-                  {op.suggestion ? (
-                    <SuggestionDiff text={op.text} suggestion={op.suggestion} resolved={selResolved} />
-                  ) : (
-                    <p
-                      class="text-meta text-(--ds-gray-900) m-0 line-clamp-2 leading-relaxed"
-                      style={{ textDecoration: selResolved ? 'line-through' : 'none', opacity: selResolved ? 0.5 : 1 }}
-                    >
-                      "{op.text}"
-                    </p>
-                  )}
-                  {op.comment && (
-                    <p
-                      class="text-ui text-(--ds-gray-1000) leading-relaxed m-0 mt-1 line-clamp-2"
-                      style={{ textDecoration: selResolved ? 'line-through' : 'none', opacity: selResolved ? 0.5 : 1 }}
-                    >
-                      <MentionText text={op.comment} mentions={op.mentions} />
-                    </p>
-                  )}
-                </button>
-                <QuickAction
-                  label={STATUS_ACTIONS[selStatus]}
-                  onClick={() => setOpStatus(op.id, STATUS_CYCLE[selStatus])}
-                />
-              </div>
-            );
-          }
-
-          const { op } = item;
-          return (
-            <button
-              key={op.id}
-              type="button"
-              class={cn(rowButton, 'border-b border-solid border-x-0 border-t-0 border-(--ds-gray-alpha-400)')}
-              onClick={() => open(item)}
-            >
-              <div class="flex items-center gap-2 h-5 mb-1">
-                <Type size={12} strokeWidth={1.5} color={op.color} aria-hidden="true" />
-                <span class="text-meta text-(--ds-gray-900) font-medium flex-1">Text</span>
-                <DeviceBadge device={op.device} />
-              </div>
-              <p class="text-meta m-0 line-clamp-2 leading-relaxed" style={{ color: op.color }}>
-                {op.text}
-              </p>
-            </button>
-          );
-        })}
-      </div>
+          })}
+        </div>
+      )}
     </>
   );
 }

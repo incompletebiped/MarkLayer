@@ -57,6 +57,21 @@ export async function loadProject(
   }
 }
 
+/**
+ * Re-read every page's ops, keeping the open page's live ones. Other pages were
+ * loaded once with the site, and another reviewer may have marked them since;
+ * the all-pages list is only worth reading if it is current.
+ */
+export async function refreshSitePages(): Promise<void> {
+  const pid = projectId.value;
+  if (!pid) return;
+  const data = await loadProject(pid);
+  if (!data || projectId.value !== pid) return;
+  const fresh = new Map(data.pages.map((p) => [p.id, p.ops]));
+  const idx = currentPageIdx.value;
+  projectPages.value = projectPages.value.map((p, i) => (i === idx ? p : { ...p, ops: fresh.get(p.id) ?? p.ops }));
+}
+
 /** Persist a project's page-id list. */
 export async function saveProject(id: string, pageIds: string[]): Promise<boolean> {
   const res = await postJson(`${API_BASE}p/${id}`, { pageIds });
@@ -234,7 +249,8 @@ export async function navigateTo({ url: raw, source = 'viewer' }: { url: string;
     return;
   }
 
-  // Landing fallback: fresh single-page share
+  // Landing: a new redline is a site from its first page, so the link it opens on
+  // is the one link it keeps — every page added later lands inside it.
   const w = window.innerWidth;
   const id = nanoid();
   const res = await postJson(`${API_BASE}${id}`, { ops: [], url, width: w });
@@ -249,5 +265,11 @@ export async function navigateTo({ url: raw, source = 'viewer' }: { url: string;
     // re-creates the row on save, and stranding someone on the landing page is worse.
     capture('page_open_failed', { mode: 'new', step: 'create_page' });
   }
-  location.href = `/s/${id}`;
+  const siteId = nanoid();
+  if (!(await saveProject(siteId, [id]))) {
+    capture('page_open_failed', { mode: 'new', step: 'save_project' });
+    location.href = `/s/${id}`;
+    return;
+  }
+  location.href = `/p/${siteId}`;
 }

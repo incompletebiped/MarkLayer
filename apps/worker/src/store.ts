@@ -294,6 +294,26 @@ export function annotationStore(db: D1Database) {
     },
 
     /**
+     * Give a new page the owner and owner-set rules of the page it was opened
+     * from: a site is one thing to its owner, so a password, a view-only setting,
+     * an expiry or a folder on it covers every page, including ones a client
+     * opened while browsing. The password generation comes along so a session
+     * already unlocked for the site stays unlocked here.
+     */
+    async inheritSettings({ id, from }: { id: string; from: string }): Promise<void> {
+      const src = (column: string) => `(SELECT ${column} FROM annotations WHERE id = ?2)`;
+      await db
+        .prepare(
+          `UPDATE annotations SET owner_id = ${src('owner_id')}, access = ${src('access')},
+             owner_expires_at = ${src('owner_expires_at')}, folder_id = ${src('folder_id')},
+             password_hash = ${src('password_hash')}, password_gen = ${src('password_gen')}
+           WHERE id = ?1 AND EXISTS (SELECT 1 FROM annotations WHERE id = ?2)`,
+        )
+        .bind(id, from)
+        .run();
+    },
+
+    /**
      * Write ops alone, preserving url/width/expiry — the realtime room's flush.
      * False when the id was too weak to mint a room at, or `mayCreate` is false
      * and there is no room yet; see `wroteRow`.
@@ -523,6 +543,28 @@ export function projectStore(db: D1Database) {
             .bind(id, JSON.stringify(pageIds), expiresAt)
             .run(),
       });
+    },
+
+    /**
+     * The site each page belongs to, with its page list. A page can sit in more
+     * than one project (an old share promoted twice); the most recently used wins.
+     */
+    async containing(pageIds: string[]): Promise<Map<string, { projectId: string; pageIds: string[] }>> {
+      const found = new Map<string, { projectId: string; pageIds: string[] }>();
+      if (pageIds.length === 0) return found;
+      const rows = await db
+        .prepare(
+          `SELECT projects.id AS id, projects.page_ids AS page_ids, page.value AS page
+           FROM projects, json_each(projects.page_ids) AS page
+           WHERE page.value IN (${pageIds.map(() => '?').join(',')})
+           ORDER BY projects.last_accessed_at DESC`,
+        )
+        .bind(...pageIds)
+        .all<{ id: string; page_ids: string; page: string }>();
+      for (const row of rows.results) {
+        if (!found.has(row.page)) found.set(row.page, { projectId: row.id, pageIds: parseIds(row.page_ids) });
+      }
+      return found;
     },
 
     touch(id: string): Promise<unknown> {

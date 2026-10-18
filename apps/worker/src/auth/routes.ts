@@ -20,6 +20,7 @@ import { hashPassword } from '../lock/password';
 import { captureServer } from '../posthog';
 import { annotationStore, inviteStore, nowInSeconds } from '../store';
 import { type AuthVariables, withUser } from './middleware';
+import { roomsActedOn, withSites } from './sites';
 import { authStore, folderStore, ownedStore } from './store';
 import { mayStartBoards } from './team';
 import { mintToken } from './tokens';
@@ -231,7 +232,8 @@ auth.use('/links', requireSession);
 auth.use('/links/*', requireSession);
 
 auth.get('/links', async (c) => {
-  const links = await ownedStore(c.env.DB).listAnnotations(c.get('session').id);
+  const owned = await ownedStore(c.env.DB).listAnnotations(c.get('session').id);
+  const links = await withSites({ db: c.env.DB, links: owned });
   return c.json({ links }, 200);
 });
 
@@ -248,14 +250,17 @@ auth.post('/links/:id', async (c) => {
 
 auth.delete('/links/:id', async (c) => {
   const ownerId = c.get('session').id;
-  const id = c.req.param('id');
-  const before = await annotationStore(c.env.DB).getLock(id);
-  const released = await ownedStore(c.env.DB).releaseAnnotation({ id, ownerId });
-  // Release reopened editing to everyone, which a warm room would not notice.
-  if (released) pingRoomRefreshAccess({ env: c.env, ctx: c.executionCtx, id });
-  // It also dropped the password, which ends every session, the same as removing it by hand.
-  if (released && before?.passwordHash) {
-    pingRoomRevoke({ env: c.env, ctx: c.executionCtx, id, gen: before.passwordGen + 1 });
+  let released = false;
+  for (const id of await roomsActedOn({ db: c.env.DB, id: c.req.param('id'), ownerId })) {
+    const before = await annotationStore(c.env.DB).getLock(id);
+    const done = await ownedStore(c.env.DB).releaseAnnotation({ id, ownerId });
+    released ||= done;
+    // Release reopened editing to everyone, which a warm room would not notice.
+    if (done) pingRoomRefreshAccess({ env: c.env, ctx: c.executionCtx, id });
+    // It also dropped the password, which ends every session, the same as removing it by hand.
+    if (done && before?.passwordHash) {
+      pingRoomRevoke({ env: c.env, ctx: c.executionCtx, id, gen: before.passwordGen + 1 });
+    }
   }
   return c.json({ released }, 200);
 });
@@ -271,12 +276,17 @@ auth.put('/links/:id/password', async (c) => {
   if (!body.success) {
     return c.json({ error: `A password needs ${LINK_PASSWORD_MIN} to ${LINK_PASSWORD_MAX} characters.` }, 400);
   }
-  const id = c.req.param('id');
+  const ownerId = c.get('session').id;
   const hash = body.data.password === null ? null : await hashPassword(body.data.password);
-  const gen = await ownedStore(c.env.DB).setPassword({ id, ownerId: c.get('session').id, hash });
+  let updated = false;
+  for (const id of await roomsActedOn({ db: c.env.DB, id: c.req.param('id'), ownerId })) {
+    const gen = await ownedStore(c.env.DB).setPassword({ id, ownerId, hash });
+    if (gen === null) continue;
+    updated = true;
+    pingRoomRevoke({ env: c.env, ctx: c.executionCtx, id, gen });
+  }
   // Same silent no-op as PATCH: a non-owner poking at an id is not worth a 403.
-  if (gen === null) return c.json({ updated: false }, 200);
-  pingRoomRevoke({ env: c.env, ctx: c.executionCtx, id, gen });
+  if (!updated) return c.json({ updated: false }, 200);
   captureServer(c.env, c.executionCtx, 'link_password_updated', { protected: hash !== null });
   return c.json({ updated: true }, 200);
 });
@@ -300,22 +310,24 @@ auth.patch('/links/:id', async (c) => {
     now: nowInSeconds(),
   });
 
-  const updated = await store.updateSettings({ id, ownerId, access, ownerExpiresAt });
-  if (updated) {
-    pingRoomRefreshAccess({ env: c.env, ctx: c.executionCtx, id });
-    captureServer(c.env, c.executionCtx, 'link_settings_updated', { access });
+  let updated = false;
+  for (const room of await roomsActedOn({ db: c.env.DB, id, ownerId })) {
+    if (!(await store.updateSettings({ id: room, ownerId, access, ownerExpiresAt }))) continue;
+    updated = true;
+    pingRoomRefreshAccess({ env: c.env, ctx: c.executionCtx, id: room });
   }
+  if (updated) captureServer(c.env, c.executionCtx, 'link_settings_updated', { access });
   return c.json({ updated }, 200);
 });
 
 auth.put('/links/:id/folder', async (c) => {
   const body = moveLinkRequestSchema.safeParse(await c.req.json().catch(() => null));
   if (!body.success) return c.json({ error: 'Invalid folder.' }, 400);
-  const moved = await ownedStore(c.env.DB).moveAnnotation({
-    id: c.req.param('id'),
-    ownerId: c.get('session').id,
-    folderId: body.data.folderId,
-  });
+  const ownerId = c.get('session').id;
+  let moved = false;
+  for (const id of await roomsActedOn({ db: c.env.DB, id: c.req.param('id'), ownerId })) {
+    moved = (await ownedStore(c.env.DB).moveAnnotation({ id, ownerId, folderId: body.data.folderId })) || moved;
+  }
   return c.json({ moved }, 200);
 });
 

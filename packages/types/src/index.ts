@@ -979,6 +979,21 @@ export function isSettled(status: CommentStatus): boolean {
 }
 
 /**
+ * Threads still waiting on someone: root annotations (a reply is part of its
+ * thread, not one of its own) that are neither done nor dismissed. One count for
+ * a site's dashboard row, a page's badge and the panel, so they never disagree.
+ */
+export function countOpen(ops: readonly DrawOp[]): number {
+  let open = 0;
+  for (const op of ops) {
+    if (!isAnnotationOp(op) || (op.tool === 'comment' && op.parentId)) continue;
+    const status = resolveOpStatus(op);
+    if (!isSettled(status) && status !== 'dismissed') open++;
+  }
+  return open;
+}
+
+/**
  * Merge a wire patch into an op and re-validate the result, returning null if the
  * patch would produce something that is no longer a valid op.
  *
@@ -1300,6 +1315,18 @@ export const ownedLinkSchema = z.object({
   folderId: z.nullable(z.string()),
   /** Whether opening the link asks for a password. Never the password or its hash. */
   passwordProtected: z.boolean(),
+  /**
+   * Set when this link is the first page of a site (a project): the row stands
+   * for the whole site and opens it, rather than for one page of it.
+   */
+  site: z.optional(
+    z.object({
+      projectId: z.string(),
+      pageCount: z.number(),
+      /** Open threads across every page, by `countOpen`. */
+      openCount: z.number(),
+    }),
+  ),
 });
 export type OwnedLink = z.infer<typeof ownedLinkSchema>;
 

@@ -11,6 +11,7 @@ export function fakeDb({
   first = null,
   firstQueue,
   all = [],
+  allQueue,
   changes = 1,
 }: {
   first?: unknown;
@@ -21,10 +22,13 @@ export function fakeDb({
    */
   firstQueue?: unknown[];
   all?: unknown[];
+  /** Answers for `.all()` in call order, like `firstQueue`; `all` answers once it is empty. */
+  allQueue?: unknown[][];
   changes?: number;
 } = {}) {
   const calls: { sql: string; bindings: unknown[] }[] = [];
   const queue = firstQueue ? [...firstQueue] : null;
+  const lists = allQueue ? [...allQueue] : null;
   const db = {
     calls,
     prepare(sql: string) {
@@ -36,7 +40,7 @@ export function fakeDb({
           return stmt;
         },
         first: async () => (queue && queue.length > 0 ? queue.shift() : first),
-        all: async () => ({ results: all }),
+        all: async () => ({ results: (lists && lists.length > 0 ? lists.shift() : undefined) ?? all }),
         run: async () => ({ success: true, meta: { changes } }),
       };
       return stmt;
