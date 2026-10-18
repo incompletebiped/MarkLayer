@@ -230,13 +230,13 @@ function Empty() {
   return (
     <div class={cn(PANEL, 'flex flex-col items-center gap-2 px-6 py-16 text-center')}>
       <Link2 size={24} strokeWidth={1.5} class="text-(--ds-gray-700)" aria-hidden="true" />
-      <span class="text-ui font-medium text-(--ds-gray-1000)">No saved links yet</span>
+      <span class="text-ui font-medium text-(--ds-gray-1000)">No redlines yet</span>
       <span class="text-meta leading-body max-w-[28rem] text-balance text-(--ds-gray-900)">
-        Open a link you made and choose <span class="text-(--ds-gray-1000)">Save to my links</span>, or annotate a page
-        to make one.
+        Every redline you start while signed in shows up here. Open one someone else made and choose{' '}
+        <span class="text-(--ds-gray-1000)">Save to my links</span> to add it too.
       </span>
       <a href="/" class={cn(submitBtn, 'mt-4 no-underline')}>
-        Annotate a page
+        Start a redline
       </a>
     </div>
   );
@@ -254,7 +254,7 @@ export function Dashboard() {
           action beside them is a box that centres on its own row instead. */}
       <div class="mb-5 flex items-end justify-between gap-4">
         <div class="flex items-baseline gap-2.5">
-          <h1 class="text-heading tracking-ui font-semibold text-(--ds-gray-1000)">Your links</h1>
+          <h1 class="text-heading tracking-ui font-semibold text-(--ds-gray-1000)">Your redlines</h1>
           {list.length > 0 && (
             <span class="text-meta tabular-nums text-(--ds-gray-900)">
               {list.length} link{list.length === 1 ? '' : 's'}
@@ -263,7 +263,7 @@ export function Dashboard() {
         </div>
         {all.length > 0 && (
           <a href="/" class={cn(submitBtn, 'no-underline')}>
-            Annotate a page
+            Start a redline
           </a>
         )}
       </div>

@@ -254,12 +254,14 @@ function TeamOnly() {
 export function Landing() {
   // Null until the session answers; the form shows meanwhile, since the server refuses a create either way.
   const canStart = useSignal<boolean | null>(null);
+  const signedIn = useSignal(false);
   useEffect(() => {
     fetch('/auth/me')
       .then((res) => res.json())
       .then((json) => {
         const parsed = sessionResponseSchema.safeParse(json);
         canStart.value = parsed.success ? (parsed.data.canStartBoards ?? true) : null;
+        signedIn.value = parsed.success && parsed.data.user !== null;
       })
       .catch(() => undefined);
   }, []);
@@ -282,6 +284,12 @@ export function Landing() {
                 {label}
               </a>
             ))}
+            {/* Signed in, the dashboard is the way back to every board you started. */}
+            {signedIn.value && (
+              <a href="/app" class="font-semibold text-ml-brand no-underline transition-colors hover:text-ml-btn-hover">
+                Your redlines
+              </a>
+            )}
             <a href={teamOnly ? '/app' : '#start'} class={BTN_CLS}>
               {teamOnly ? 'Team sign in' : 'Start a redline'}
             </a>

@@ -11,16 +11,16 @@
 export const trim = (s: string) => s.replace(/\n\s+/g, ' ').trim();
 
 /**
- * Primary action — "Post", "Save", "Comment". Geist's inverted primary: the ink
- * colour becomes the fill, so the strongest control on a surface is the one with
- * the most contrast rather than the most colour.
+ * Primary action — "Post", "Save", "Comment". Redline's navy (`ml-accent`, defined
+ * in both the web and extension stylesheets), with the page colour as its label so
+ * dark mode's lighter navy still reads.
  */
 export const submitBtn = trim(`
   inline-flex items-center justify-center gap-1.5 h-8 px-3 whitespace-nowrap
   text-ui font-medium rounded-md border-none cursor-pointer outline-none
-  bg-(--ds-gray-1000) text-(--ds-background-100)
+  bg-ml-accent text-(--ds-background-100)
   transition-[background-color] duration-150 ease-out
-  hover:bg-(--ds-gray-1000)/90
+  hover:bg-ml-accent/90
   focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2
   focus-visible:outline-(--ds-focus-color)
 `);

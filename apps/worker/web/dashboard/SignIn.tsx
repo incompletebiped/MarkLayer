@@ -65,7 +65,7 @@ export function SignIn() {
     <Frame>
       <div class="mb-6 flex flex-col items-center gap-3 text-center">
         <Logo size={28} />
-        <h1 class="text-title tracking-display font-semibold text-(--ds-gray-1000)">Your links</h1>
+        <h1 class="text-title tracking-display font-semibold text-(--ds-gray-1000)">Your redlines</h1>
         <p class="text-meta leading-body text-balance text-(--ds-gray-900)">
           Sign in to keep the links you make, so they are still here next week.
         </p>

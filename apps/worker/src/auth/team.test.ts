@@ -78,6 +78,9 @@ describe('POST /{id} with the team gate on', () => {
     });
     expect(res.status).toBe(200);
     expect(inserted(db)).toBe(true);
+    // Theirs from the first write, so it lands on their dashboard.
+    const claim = db.calls.find((call) => call.sql.includes('SET owner_id'));
+    expect(claim?.bindings).toEqual(['u1', ID]);
   });
 
   test('refuses someone signed in from outside the team', async () => {
@@ -102,6 +105,8 @@ describe('POST /{id} with the team gate on', () => {
     });
     expect(res.status).toBe(200);
     expect(inserted(db)).toBe(true);
+    // Nobody signed in, so nobody to own it.
+    expect(db.calls.some((call) => call.sql.includes('SET owner_id'))).toBe(false);
   });
 
   test('refuses a page on another site, even from inside a room', async () => {

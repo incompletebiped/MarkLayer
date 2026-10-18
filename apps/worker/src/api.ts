@@ -12,7 +12,8 @@ import {
 import type { Context } from 'hono';
 import { cors } from 'hono/cors';
 import { userFromCookieHeader } from './auth';
-import { requestMayStartBoards, TEAM_ONLY } from './auth/team';
+import { ownedStore } from './auth/store';
+import { mayStartBoards, requestMayStartBoards, TEAM_ONLY } from './auth/team';
 import { dayCached, once } from './http';
 import type { Env } from './index';
 import {
@@ -340,9 +341,11 @@ api.openapi(storeAnnotation, async (c) => {
   const current = await store.getAccess(id);
   // No row yet means this write would mint the room: the team may, and so may a
   // page opened from inside a room on the same site.
+  // Resolved only for a create: an update never needs to know who is asking.
+  const creator = current ? null : await userFromCookieHeader({ header: c.req.header('cookie') ?? null, db: c.env.DB });
   if (
     !current &&
-    !(await mayCreate({ env: c.env, cookie: c.req.header('cookie') })) &&
+    !mayStartBoards({ env: c.env, email: creator?.email }) &&
     !(await sameSiteAs({
       db: c.env.DB,
       from: Array.isArray(body) ? undefined : body.from,
@@ -371,6 +374,9 @@ api.openapi(storeAnnotation, async (c) => {
   if (!(await store.put({ id, ops: result.data, url, width, expiresAt }))) {
     return c.json({ error: WEAK_NEW_ID }, 400);
   }
+  // A board someone signed in starts is theirs from the first write, so it is on
+  // their dashboard without a separate "Save to my links".
+  if (creator) await ownedStore(c.env.DB).claimAnnotation({ id, ownerId: creator.id });
 
   // The web app autosaves a bare ops array every few seconds (useRealtimeSync);
   // the extension and API callers send the object form only when someone
