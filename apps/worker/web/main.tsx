@@ -3,6 +3,7 @@ import { effect } from '@preact/signals';
 import { render } from 'preact';
 import { App } from './App';
 import { initAnalytics, markReloading } from './analytics';
+import { startViewerRole } from './role';
 import { isLanding, STILL_FRAME } from './signals';
 import './style.css';
 
@@ -35,6 +36,9 @@ initAnalytics({
   key: import.meta.env.DEV ? undefined : import.meta.env.VITE_PUBLIC_POSTHOG_KEY,
   surface: isLanding.peek() ? 'landing' : STILL_FRAME ? 'demo' : 'viewer',
 });
+
+// Before the first render, so a client never sees the team's toolbar flash past.
+if (!isLanding.peek()) startViewerRole();
 
 const root = document.getElementById('app')!;
 root.innerHTML = '';

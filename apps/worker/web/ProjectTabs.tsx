@@ -6,6 +6,7 @@ import { cn, countOpen } from '@marklayer/types';
 import { ChevronDown, ChevronLeft, ChevronRight, Plus, Search, Trash2 } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { navigateTo, switchToPage } from './projects';
+import { isClient } from './role';
 import {
   currentPageIdx,
   isReadonly,
@@ -63,7 +64,8 @@ export function ProjectTabs() {
   const pid = projectId.value;
   const pages = projectPages.value;
   const idx = currentPageIdx.value;
-  const readonly = isReadonly.value;
+  // A client browses the site's pages; adding and removing them is the team's call.
+  const readonly = isReadonly.value || isClient.value;
   const loading = projectLoading.value;
 
   if (!pid || pages.length === 0) return null;

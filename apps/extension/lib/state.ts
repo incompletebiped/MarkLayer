@@ -881,11 +881,28 @@ export const elementToolsUnavailable = signal(false);
 
 export const toolSlots = signal<ToolSlot[]>(parseToolSlots(lsGet('ml-tool-order')));
 
+/**
+ * The tools this person may use; null is all of them. The web viewer narrows it
+ * for a client — anyone who is not on the team — who only needs to move around
+ * and comment. Everything else the toolbar offers (settings, colour, history,
+ * share) goes with it.
+ */
+export const allowedTools = signal<readonly Tool[] | null>(null);
+
+// A tool outside the allowance can still be armed by a shortcut or a stored
+// choice; with no button left to disarm it, drop back to moving.
+effect(() => {
+  const allowed = allowedTools.value;
+  if (allowed && !allowed.includes(activeTool.value)) activeTool.value = 'navigate';
+});
+
 /** What the toolbar renders. Derived rather than filtered per render: the list
  *  keys a FLIP layout pass, so a fresh array identity re-measures every button. */
-export const visibleSlots = computed(() =>
-  elementToolsUnavailable.value ? toolSlots.value.filter((t) => !ELEMENT_TOOLS.has(t)) : toolSlots.value,
-);
+export const visibleSlots = computed(() => {
+  const allowed = allowedTools.value;
+  if (allowed) return toolSlots.value.filter((t) => !isToolGroup(t) && allowed.includes(t));
+  return elementToolsUnavailable.value ? toolSlots.value.filter((t) => !ELEMENT_TOOLS.has(t)) : toolSlots.value;
+});
 
 /** Moves `slot` into the place `to` holds, by identity, so slots the host hides keep their own places. */
 export function moveSlot({ slot, to }: { slot: ToolSlot; to: ToolSlot }) {

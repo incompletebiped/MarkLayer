@@ -32,6 +32,7 @@ const {
   clearInspectorStack,
   color,
   copyInspectorStack,
+  allowedTools,
   colorName,
   isRandomUserName,
   randomUserName,
@@ -741,6 +742,22 @@ function withConfirm(answer: boolean, body: () => void): boolean {
   }
   return asked;
 }
+
+describe('allowedTools', () => {
+  test('a client gets only the tools they are allowed, and cannot arm another', () => {
+    allowedTools.value = ['navigate', 'comment'];
+    try {
+      expect(visibleSlots.value).toEqual(['navigate', 'comment']);
+      activeTool.value = 'pen';
+      expect(activeTool.value).toBe('navigate');
+      activeTool.value = 'comment';
+      expect(activeTool.value).toBe('comment');
+    } finally {
+      allowedTools.value = null;
+    }
+    expect(visibleSlots.value.length).toBeGreaterThan(2);
+  });
+});
 
 describe('isRandomUserName', () => {
   test('recognises every name the roller can produce', () => {

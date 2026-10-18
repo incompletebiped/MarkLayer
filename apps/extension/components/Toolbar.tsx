@@ -14,6 +14,7 @@ import { capturePointer, pointerSampler } from '../lib/pointer';
 import { portalContainer } from '../lib/portal';
 import {
   activeTool,
+  allowedTools,
   clearAll,
   color,
   colorName,
@@ -769,6 +770,7 @@ function useToolReorder(containerRef: RefObject<HTMLDivElement | null>) {
 
 function ExpandedToolbar({ onMinimize, drag }: { onMinimize: () => void; drag: DragApi }) {
   const slots = visibleSlots.value;
+  const client = allowedTools.value !== null;
   // The faces are read here so the FLIP pass re-runs when a group swaps its icon.
   const toolsRef = useFlipReorder([slots, groupFaces.value]);
   const reorder = useToolReorder(toolsRef);
@@ -808,46 +810,51 @@ function ExpandedToolbar({ onMinimize, drag }: { onMinimize: () => void; drag: D
         })}
       </div>
 
-      <BaseToolbar.Separator className={geist.sep} />
-
-      <ColorChip />
-
-      <BaseToolbar.Group aria-label="History" data-ml-tb="history" className="flex gap-1 items-center">
-        {HISTORY_ACTIONS.map((a) => (
-          <Ctl key={a.id} icon={a.icon} onClick={a.fn} tip={a.tip} shortcut={a.shortcut} />
-        ))}
-      </BaseToolbar.Group>
-
-      {(operations.value.length > 0 || inspectorStack.value.length > 0) && (
+      {/* A client gets the tools and nothing else: no colour, history, share or settings. */}
+      {!client && (
         <>
           <BaseToolbar.Separator className={geist.sep} />
-          {openAnnotationTotal.value > 0 && (
-            <Ctl
-              icon="copy"
-              onClick={() => copyOpenAnnotations({ ops: operations.value, url: location.href })}
-              tip="Copy all open for AI"
-              action="copy_all_for_ai"
-            />
+
+          <ColorChip />
+
+          <BaseToolbar.Group aria-label="History" data-ml-tb="history" className="flex gap-1 items-center">
+            {HISTORY_ACTIONS.map((a) => (
+              <Ctl key={a.id} icon={a.icon} onClick={a.fn} tip={a.tip} shortcut={a.shortcut} />
+            ))}
+          </BaseToolbar.Group>
+
+          {(operations.value.length > 0 || inspectorStack.value.length > 0) && (
+            <>
+              <BaseToolbar.Separator className={geist.sep} />
+              {openAnnotationTotal.value > 0 && (
+                <Ctl
+                  icon="copy"
+                  onClick={() => copyOpenAnnotations({ ops: operations.value, url: location.href })}
+                  tip="Copy all open for AI"
+                  action="copy_all_for_ai"
+                />
+              )}
+              <Ctl icon={SHARE_ACTION.icon} onClick={SHARE_ACTION.fn} tip={SHARE_ACTION.tip} action="share" />
+            </>
           )}
-          <Ctl icon={SHARE_ACTION.icon} onClick={SHARE_ACTION.fn} tip={SHARE_ACTION.tip} action="share" />
+
+          <DragGrip drag={drag} />
+
+          <ConnectionDot />
+
+          <Ctl icon="minimize" onClick={onMinimize} tip="Minimize" action="minimize" />
+
+          <Ctl
+            icon="settings"
+            on={showSettings.value}
+            onClick={() => {
+              showSettings.value = !showSettings.value;
+            }}
+            tip="Settings"
+            anchor="settings"
+          />
         </>
       )}
-
-      <DragGrip drag={drag} />
-
-      <ConnectionDot />
-
-      <Ctl icon="minimize" onClick={onMinimize} tip="Minimize" action="minimize" />
-
-      <Ctl
-        icon="settings"
-        on={showSettings.value}
-        onClick={() => {
-          showSettings.value = !showSettings.value;
-        }}
-        tip="Settings"
-        anchor="settings"
-      />
     </BaseToolbar.Root>
   );
 }
@@ -954,7 +961,7 @@ export function Toolbar() {
         )}
       </div>
       <DragShield />
-      <SettingsPanel />
+      {allowedTools.value === null && <SettingsPanel />}
     </>
   );
 }

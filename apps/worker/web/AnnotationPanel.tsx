@@ -48,6 +48,7 @@ import { capture } from './analytics';
 import { type AnnotationItem, itemAnchor, itemLabel } from './annotationItems';
 import { IntroComposerSlot, IntroVideo, introComposerOpen, intros } from './IntroVideo';
 import { ReviewSection } from './ReviewPanel';
+import { isClient } from './role';
 import { panelScope, ScopeToggle, SiteComments } from './SiteComments';
 import { DEVICE_ICONS, DEVICE_LABELS, menuItem } from './shared';
 import { fileUrl, isReadonly, showBoard } from './signals';
@@ -533,7 +534,10 @@ function AnnotationPanelView({ onScrollTo, getExportData }: BodyProps) {
             <span class="text-ui font-normal text-(--ds-gray-900) tabular-nums">{totalCount}</span>
           </h2>
           <div class="flex shrink-0 items-center gap-0.5">
-            <PanelMenu onCopyForAi={handleCopyForAi} onCopy={handleCopy} onDownload={handleDownload} />
+            {/* Export and AI handoff are the team's tools, not the client's. */}
+            {!isClient.value && (
+              <PanelMenu onCopyForAi={handleCopyForAi} onCopy={handleCopy} onDownload={handleDownload} />
+            )}
             <button
               type="button"
               onClick={() => (showAnnotationPanel.value = false)}

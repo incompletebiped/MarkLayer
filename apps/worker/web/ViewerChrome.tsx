@@ -40,6 +40,7 @@ import { canvasFitted, canvasZoom, toggleCanvasFit } from './DeviceOverview';
 import { isUploadPath } from './docSource';
 import { PresenceMenu } from './PresenceMenu';
 import { type PreviewInfo, previewInfo } from './review';
+import { isClient } from './role';
 import { SharePopover } from './SharePopover';
 import { DEVICE_ICONS, HOME_LINK_PROPS, Logo } from './shared';
 import {
@@ -504,7 +505,30 @@ function ThemeButton() {
   );
 }
 
+/** A client's bar: the brand, who is here, the comments. Page tools, devices, zoom, voice and sharing are the team's. */
+function ClientTopBar() {
+  return (
+    <div class={cn('flex items-center gap-2 px-3 h-12 z-50 shrink-0', geist.bar)}>
+      <BrandLink />
+      <div class="flex-1" />
+      <div class="flex items-center gap-1 shrink-0">
+        <IdentityCard />
+        <PresenceGroup />
+        <ConnectionStatus />
+        <BarButton
+          icon={<MessageSquare size={16} strokeWidth={1.5} aria-hidden="true" />}
+          tip="Comments"
+          on={showAnnotationPanel.value}
+          onClick={() => (showAnnotationPanel.value = !showAnnotationPanel.value)}
+        />
+        <ThemeButton />
+      </div>
+    </div>
+  );
+}
+
 export function ViewerTopBar() {
+  if (isClient.value) return <ClientTopBar />;
   return (
     <div class={cn('flex items-center gap-2 px-3 h-12 z-50 shrink-0', geist.bar)}>
       <BrandLink />
