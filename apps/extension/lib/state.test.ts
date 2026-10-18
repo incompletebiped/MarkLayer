@@ -748,10 +748,12 @@ describe('allowedTools', () => {
     allowedTools.value = ['navigate', 'comment'];
     try {
       expect(visibleSlots.value).toEqual(['navigate', 'comment']);
+      // Read through a function: right after an assignment TypeScript narrows the signal to what was assigned.
+      const armed = () => activeTool.value;
       activeTool.value = 'pen';
-      expect(activeTool.value).toBe('navigate');
+      expect(armed()).toBe('navigate');
       activeTool.value = 'comment';
-      expect(activeTool.value).toBe('comment');
+      expect(armed()).toBe('comment');
     } finally {
       allowedTools.value = null;
     }

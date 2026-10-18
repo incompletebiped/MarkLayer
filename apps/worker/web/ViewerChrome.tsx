@@ -505,11 +505,15 @@ function ThemeButton() {
   );
 }
 
-/** A client's bar: the brand, who is here, the comments. Page tools, devices, zoom, voice and sharing are the team's. */
+/** A client's bar: devices, zoom, who is here, comments and sharing. The address field, page details and voice are the team's. */
 function ClientTopBar() {
   return (
     <div class={cn('flex items-center gap-2 px-3 h-12 z-50 shrink-0', geist.bar)}>
       <BrandLink />
+      <div class={geist.sep} />
+      <ViewportSwitcher />
+      <DeviceOverviewButton />
+      <ZoomControl />
       <div class="flex-1" />
       <div class="flex items-center gap-1 shrink-0">
         <IdentityCard />
@@ -521,6 +525,7 @@ function ClientTopBar() {
           on={showAnnotationPanel.value}
           onClick={() => (showAnnotationPanel.value = !showAnnotationPanel.value)}
         />
+        {!isReadonly.value && <SharePopover />}
         <ThemeButton />
       </div>
     </div>

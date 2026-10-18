@@ -17,6 +17,7 @@ import { capture } from './analytics';
 import { LinkSettings } from './dashboard/LinkSettings';
 import { inviteToLink, links, linksLoading, loadSession, sessionLoading, user } from './dashboard/session';
 import { FeedbackButtonSection } from './FeedbackButtonSection';
+import { isClient } from './role';
 import { CopyControl, Spinner } from './shared';
 import { annotationId, projectId, sharing } from './signals';
 import { useViewerFrame } from './viewerFrame';
@@ -313,7 +314,12 @@ function LinkOrCreate({ link }: { link: ShareLink }) {
 
 /** Everything under the link, the same on either surface: ways to send it, then who may edit it. */
 function ShareSections({ link, sheet }: { link: ShareLink; sheet: boolean }) {
-  const { pid, url, linkId, settings, footer, owned } = link;
+  const { pid, url, linkId, owned } = link;
+  // A client shares the link and invites people to it; embedding it, its
+  // settings and saving it to an account are the team's.
+  const client = isClient.value;
+  const settings = client ? null : link.settings;
+  const footer = client ? null : link.footer;
   return (
     <>
       {url && linkId && (
@@ -322,7 +328,7 @@ function ShareSections({ link, sheet }: { link: ShareLink; sheet: boolean }) {
           <div class="flex flex-col py-1">
             {sheet && hasShareSheet && <ShareSheet url={url} />}
             {!hasShareSheet && <InviteByEmail id={linkId} url={url} />}
-            <FeedbackButtonSection kind={pid ? 'project' : 'page'} id={linkId} />
+            {!client && <FeedbackButtonSection kind={pid ? 'project' : 'page'} id={linkId} />}
           </div>
         </>
       )}
