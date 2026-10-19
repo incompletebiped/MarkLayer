@@ -18,11 +18,11 @@ import { inviteTemplate, sendEmail, signInTemplate, UndeliverableAddressError } 
 import { overRateLimit } from '../http';
 import { hashPassword } from '../lock/password';
 import { captureServer } from '../posthog';
-import { annotationStore, inviteStore, nowInSeconds } from '../store';
+import { annotationStore, inviteStore, nowInSeconds, projectStore } from '../store';
 import { type AuthVariables, withUser } from './middleware';
 import { roomsActedOn, withSites } from './sites';
 import { authStore, folderStore, ownedStore } from './store';
-import { mayStartBoards } from './team';
+import { mayStartBoards, teamGated } from './team';
 import { mintToken } from './tokens';
 import { type AuthEnv, normalizeEmail, SESSION_COOKIE, SESSION_TTL_SECONDS, type User } from './types';
 import { confirmPage, expiredPage, isTokenShaped } from './verify-page';
@@ -91,6 +91,42 @@ function pingRoomRevoke({
       .fetch(new Request(`https://room/revoke?id=${encodeURIComponent(id)}&gen=${gen}`, { method: 'POST' }))
       .catch(() => undefined),
   );
+}
+
+/** Deletes the rooms a dashboard row covers, and its site when the row is the site's first page. */
+async function deleteBoard({
+  env,
+  ctx,
+  id,
+  ownerId,
+}: {
+  env: AuthEnv;
+  ctx: { waitUntil(promise: Promise<unknown>): void };
+  id: string;
+  ownerId: string;
+}): Promise<boolean> {
+  const rooms = await roomsActedOn({ db: env.DB, id, ownerId });
+  const owned = await env.DB.prepare(
+    `SELECT id FROM annotations WHERE owner_id = ? AND id IN (${rooms.map(() => '?').join(',')})`,
+  )
+    .bind(ownerId, ...rooms)
+    .all<{ id: string }>();
+  const ids = owned.results.map((r) => r.id);
+  if (!ids.includes(id)) return false;
+  const site = (await projectStore(env.DB).containing([id])).get(id);
+  await env.DB.batch([
+    ...ids.map((room) => env.DB.prepare('DELETE FROM annotations WHERE id = ?').bind(room)),
+    ...(site?.pageIds[0] === id ? [env.DB.prepare('DELETE FROM projects WHERE id = ?').bind(site.projectId)] : []),
+  ]);
+  for (const room of ids) {
+    const stub = env.ANNOTATION_ROOM.get(env.ANNOTATION_ROOM.idFromName(room));
+    ctx.waitUntil(
+      stub
+        .fetch(new Request(`https://room/delete?id=${encodeURIComponent(room)}`, { method: 'POST' }))
+        .catch(() => undefined),
+    );
+  }
+  return true;
 }
 
 const UNDELIVERABLE = 'We cannot deliver mail to that address. Check it for a typo, or use another one.';
@@ -250,6 +286,12 @@ auth.post('/links/:id', async (c) => {
 
 auth.delete('/links/:id', async (c) => {
   const ownerId = c.get('session').id;
+  // A team deployment deletes outright: a released board stays open to anyone
+  // with its link until the 90-day sweep, and it still counts as a proxied site.
+  if (teamGated(c.env)) {
+    const deleted = await deleteBoard({ env: c.env, ctx: c.executionCtx, id: c.req.param('id'), ownerId });
+    return c.json({ released: deleted }, 200);
+  }
   let released = false;
   for (const id of await roomsActedOn({ db: c.env.DB, id: c.req.param('id'), ownerId })) {
     const before = await annotationStore(c.env.DB).getLock(id);

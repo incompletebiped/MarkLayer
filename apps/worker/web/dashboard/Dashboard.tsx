@@ -170,7 +170,7 @@ function LinkRow({ link }: { link: OwnedLink }) {
           {mode.value === 'confirming' ? (
             <>
               <button type="button" class={cn(geist.actionBtn, CONFIRM_BTN)} onClick={() => void releaseLink(link.id)}>
-                Remove
+                Delete
               </button>
               <button
                 type="button"
@@ -204,7 +204,7 @@ function LinkRow({ link }: { link: OwnedLink }) {
               </button>
               <button
                 type="button"
-                aria-label="Remove from your links"
+                aria-label="Delete"
                 class={cn(geist.ctlSm, geist.ctlIdle, ROW_CTL, 'hover:text-(--ds-red-700)')}
                 onClick={() => {
                   mode.value = 'confirming';
@@ -311,8 +311,8 @@ export function Dashboard() {
           {/* Said once, at the foot of the list, rather than re-explained on
               every row — which is what the per-row "unless opened" was doing. */}
           <p class="text-meta leading-body mt-3 text-(--ds-gray-900)">
-            Links you keep here are not deleted. Give one an expiry in its settings if you want it to go, or remove it
-            to put it back on the 90-day clock.
+            Links you keep here stay until you delete them or give one an expiry in its settings. Deleting a site
+            removes every page and comment on it, for everyone.
           </p>
         </>
       )}

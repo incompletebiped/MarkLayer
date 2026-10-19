@@ -526,6 +526,24 @@ export class AnnotationRoom extends DurableObject<Env> {
       await this.clearOps({ id });
       return new Response(null, { status: 204 });
     }
+    // The owner deleted the board. Its row is already gone; this drops what a warm
+    // room holds, so a pending flush has nothing to write and nobody stays on it.
+    if (request.method === 'POST' && url.pathname === '/delete') {
+      this.ops = null;
+      this.opsPromise = null;
+      this.dirty = false;
+      await this.ctx.storage.deleteAlarm();
+      for (const ws of this.ctx.getWebSockets()) {
+        try {
+          ws.close(1000, 'deleted');
+        } catch {
+          // Already closing on the client's side.
+        }
+      }
+      this.httpAgents.clear();
+      this.wakeWatchers([]);
+      return new Response(null, { status: 204 });
+    }
     // The owner set, changed or removed the password.
     if (request.method === 'POST' && url.pathname === '/revoke') {
       this.revoke(Number(url.searchParams.get('gen')));
