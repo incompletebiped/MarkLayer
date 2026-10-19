@@ -14,7 +14,7 @@ import { setCookie } from 'hono/cookie';
 import { cors } from 'hono/cors';
 import { userFromCookieHeader } from './auth';
 import { ownedStore } from './auth/store';
-import { mayStartBoards, requestMayStartBoards, TEAM_ONLY } from './auth/team';
+import { mayStartBoards, requestMayStartBoards, TEAM_ONLY, teamGated } from './auth/team';
 import { dayCached, once } from './http';
 import type { Env } from './index';
 import {
@@ -287,8 +287,13 @@ async function sameSiteAs({
   if (!from || !url) return false;
   const roomUrl = await annotationStore(db).getUrl(from);
   if (!roomUrl || !(await roomAccess({ db, id: from, headers })).open) return false;
+  return sameOrigin(roomUrl, url);
+}
+
+function sameOrigin(a: string | null, b: string): boolean {
+  if (!a) return false;
   try {
-    return new URL(roomUrl).origin === new URL(url).origin;
+    return new URL(a).origin === new URL(b).origin;
   } catch {
     return false;
   }
@@ -364,6 +369,13 @@ api.openapi(storeAnnotation, async (c) => {
     if (!canEditLink({ ...current, userId: user?.id })) {
       return c.json({ error: 'This link is view-only.' }, 403);
     }
+  }
+
+  // A room's site decides what the proxy will serve, so only the team may move
+  // a room to another one; anyone else's write keeps the room where it is.
+  if (current && url && teamGated(c.env)) {
+    const user = await userFromCookieHeader({ header: c.req.header('cookie') ?? null, db: c.env.DB });
+    if (!mayStartBoards({ env: c.env, email: user?.email }) && !sameOrigin(await store.getUrl(id), url)) url = null;
   }
 
   // False: too weak an id to mint, and no existing room to update. The store

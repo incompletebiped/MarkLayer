@@ -4,6 +4,7 @@ import { errorRelayScript } from './error-relay';
 import type { Env } from './index';
 import { captureBlockedSite, captureServer } from './posthog';
 import { PROXY_ERRORS } from './proxy-errors';
+import { mayProxyHost } from './proxy-gate';
 
 const BROWSER_UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
@@ -426,6 +427,8 @@ function isViewableDocument(contentType: string): boolean {
 
 const proxy = new Hono<Env>();
 
+const NO_BOARD_FOR_HOST = 'This site has no board here. Only the team can start one.';
+
 // Proxy endpoint: fetches a page and strips frame-blocking headers
 proxy.get('/proxy', async (c) => {
   const url = c.req.query('url');
@@ -441,6 +444,7 @@ proxy.get('/proxy', async (c) => {
 
   const reqUrl = new URL(c.req.url);
   if (gate.url.hostname.toLowerCase() === reqUrl.hostname.toLowerCase()) return c.redirect('/#error=self');
+  if (!(await mayProxyHost({ env: c.env, host: gate.url.hostname }))) return c.text(NO_BOARD_FOR_HOST, 403);
 
   const fetchStart = Date.now();
   try {
@@ -711,6 +715,11 @@ proxy.all('/px/*', async (c) => {
   const rest = slashIdx > 0 ? path.slice(slashIdx) : '/';
 
   if (!host) return c.text('Missing host', 400);
+  // Sub-resources come from any CDN, so they can't be gated by host; opening one
+  // as a page is what would serve a stranger's HTML under our domain.
+  if (c.req.header('Sec-Fetch-Dest') === 'document' && !(await mayProxyHost({ env: c.env, host }))) {
+    return c.text(NO_BOARD_FOR_HOST, 403);
+  }
 
   const targetUrl = `https://${host}${rest}${new URL(c.req.url).search}`;
   const gate = parseFetchableUrl(targetUrl);
@@ -782,8 +791,12 @@ proxy.all('*', async (c) => {
   if (!match) return c.env.ASSETS.fetch(c.req.raw);
 
   try {
+    // Only our own proxied pages: any site can send a Referer with `/proxy?url=` in its path.
+    if (new URL(referer).origin !== new URL(c.req.url).origin) return c.env.ASSETS.fetch(c.req.raw);
     const gate = parseFetchableUrl(decodeURIComponent(match[1]));
-    if (!gate.ok) return c.env.ASSETS.fetch(c.req.raw);
+    if (!gate.ok || !(await mayProxyHost({ env: c.env, host: gate.url.hostname }))) {
+      return c.env.ASSETS.fetch(c.req.raw);
+    }
     const origin = gate.url.origin;
     const reqUrl = new URL(c.req.url);
     const target = `${origin}${reqUrl.pathname}${reqUrl.search}`;
