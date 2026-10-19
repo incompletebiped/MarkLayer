@@ -28,3 +28,6 @@ apps/worker/index.html
 
 # Internal research and ADRs — kept locally, not published.
 /docs/
+
+# Personal working notes (Punch List port list, etc.) — not published.
+/dev_notes/
