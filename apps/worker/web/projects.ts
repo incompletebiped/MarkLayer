@@ -138,6 +138,14 @@ export function switchToPage(i: number) {
 /** What the server says when starting a board is the team's alone; shown as is. */
 export const TEAM_ONLY_TOAST = 'That page is on another site. Only the team can start a board there.';
 
+/**
+ * The width every new page is laid out at in desktop view. It used to be the
+ * creator's window, so a page first opened in a narrow window kept the site's
+ * mobile layout for everyone; a fixed desktop size gives every reviewer the same
+ * layout, Auto zoom fits it to their screen, and marks line up between them.
+ */
+export const DESKTOP_REFERENCE_WIDTH = 1440;
+
 /** The room the viewer is on now, which a new page is opened from. */
 function currentRoomId(): string | undefined {
   if (projectId.value) return projectPages.value[currentPageIdx.value]?.id;
@@ -150,7 +158,12 @@ function currentRoomId(): string | undefined {
  */
 export async function createAnnotationFor(url: string): Promise<{ id: string } | { error: string }> {
   const id = nanoid();
-  const res = await postJson(`${API_BASE}${id}`, { ops: [], url, width: window.innerWidth, from: currentRoomId() });
+  const res = await postJson(`${API_BASE}${id}`, {
+    ops: [],
+    url,
+    width: DESKTOP_REFERENCE_WIDTH,
+    from: currentRoomId(),
+  });
   if (res?.ok) return { id };
   return { error: res?.status === 403 ? TEAM_ONLY_TOAST : 'Failed to add page' };
 }
@@ -196,7 +209,7 @@ export async function navigateTo({ url: raw, source = 'viewer' }: { url: string;
     const idx = currentPageIdx.value;
     // Snapshot current page's live ops back into the cached list before switching
     const snapshot = pages.map((p, j) => (j === idx ? { ...p, ops: [...operations.value] } : p));
-    const next: ProjectPage[] = [...snapshot, { id: newPageId, url, width: window.innerWidth, ops: [] }];
+    const next: ProjectPage[] = [...snapshot, { id: newPageId, url, width: DESKTOP_REFERENCE_WIDTH, ops: [] }];
     projectPages.value = next;
     const ok = await saveProject(
       pid,
@@ -227,7 +240,7 @@ export async function navigateTo({ url: raw, source = 'viewer' }: { url: string;
     await postJson(`${API_BASE}${currentId}`, {
       ops: operations.value,
       url: currentUrl,
-      width: originalWidth.value || window.innerWidth,
+      width: originalWidth.value || DESKTOP_REFERENCE_WIDTH,
     });
     const created = await createAnnotationFor(url);
     if ('error' in created) {
@@ -251,9 +264,8 @@ export async function navigateTo({ url: raw, source = 'viewer' }: { url: string;
 
   // Landing: a new redline is a site from its first page, so the link it opens on
   // is the one link it keeps — every page added later lands inside it.
-  const w = window.innerWidth;
   const id = nanoid();
-  const res = await postJson(`${API_BASE}${id}`, { ops: [], url, width: w });
+  const res = await postJson(`${API_BASE}${id}`, { ops: [], url, width: DESKTOP_REFERENCE_WIDTH });
   // Refused outright: there is no board to land on, so stay and say why.
   if (res?.status === 403) {
     showToast('Only the team can start a new board. Sign in with your team email first.', { type: 'error' });
